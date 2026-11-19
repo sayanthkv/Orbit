@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Lock, ArrowRight } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
 import Logo from '../components/common/Logo';
 import Input from '../components/common/Input';
 import Select from '../components/common/Select';
@@ -63,24 +63,28 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
-      <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-slate-950">
+      {/* Dynamic ambient background glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 left-10 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="w-full max-w-md relative z-10">
+        <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
           <div className="flex flex-col items-center text-center">
             <Logo size="lg" showTagline={true} className="mb-4" />
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-              Create your Orbit account
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              Create your account
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Start tracking expenses & growing your savings
+            <p className="text-xs text-slate-400 mt-1.5">
+              Start your clean financial journey with Orbit today
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 pt-1">
             <Input
               label="Full Name"
               type="text"
-              placeholder="Alex Johnson"
+              placeholder="e.g. Maya Patel"
               icon={User}
               required
               value={formData.name}
@@ -115,25 +119,31 @@ export const RegisterPage = () => {
               options={CURRENCIES}
               value={formData.currency}
               onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+              helperText="You can change your currency anytime in Settings"
             />
 
             <Button
               type="submit"
               size="lg"
-              className="w-full mt-2"
+              className="w-full mt-3 shadow-lg shadow-emerald-600/25"
               isLoading={isLoading}
               icon={ArrowRight}
             >
-              Get Started
+              Get Started Free
             </Button>
           </form>
 
-          <div className="text-center pt-2 border-t border-slate-100 dark:border-slate-800">
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Already have an Orbit account?{' '}
+          <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500 pt-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Private, personal & fully controlled by you</span>
+          </div>
+
+          <div className="text-center pt-3 border-t border-slate-800/80">
+            <p className="text-xs text-slate-400">
+              Already have an account?{' '}
               <Link
                 to="/login"
-                className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                className="font-semibold text-emerald-400 hover:text-emerald-300 hover:underline transition-colors"
               >
                 Sign in
               </Link>

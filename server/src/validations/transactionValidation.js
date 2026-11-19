@@ -1,5 +1,7 @@
 const { z } = require('zod');
 
+const emptyToUndefined = z.literal('').transform(() => undefined);
+
 const createTransactionSchema = z.object({
   body: z.object({
     type: z.enum(['expense', 'income'], {
@@ -31,14 +33,14 @@ const listTransactionsQuerySchema = z.object({
   query: z.object({
     page: z.coerce.number().int().min(1).optional().default(1),
     limit: z.coerce.number().int().min(1).max(100).optional().default(10),
-    type: z.enum(['expense', 'income']).optional(),
-    categoryId: z.string().optional(),
-    paymentMethod: z.enum(['cash', 'UPI', 'card', 'bank']).optional(),
-    startDate: z.string().optional(),
-    endDate: z.string().optional(),
-    minAmount: z.coerce.number().optional(),
-    maxAmount: z.coerce.number().optional(),
-    search: z.string().optional(),
+    type: z.union([z.enum(['expense', 'income']), emptyToUndefined]).optional(),
+    categoryId: z.union([z.string().regex(/^[0-9a-fA-F]{24}$/), emptyToUndefined]).optional(),
+    paymentMethod: z.union([z.enum(['cash', 'UPI', 'card', 'bank']), emptyToUndefined]).optional(),
+    startDate: z.union([z.string(), emptyToUndefined]).optional(),
+    endDate: z.union([z.string(), emptyToUndefined]).optional(),
+    minAmount: z.union([z.coerce.number(), emptyToUndefined]).optional(),
+    maxAmount: z.union([z.coerce.number(), emptyToUndefined]).optional(),
+    search: z.union([z.string(), emptyToUndefined]).optional(),
     sortBy: z.enum(['date', 'amount']).optional().default('date'),
     sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
   }),

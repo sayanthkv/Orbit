@@ -105,17 +105,15 @@ COOKIE_SECURE=false
 VITE_API_URL=http://localhost:5000/api
 ```
 
-### 3. Seed Realistic Demo Data
+### 3. Reset Database to Clean Slate
 
-Populate the database with demo transactions across 3 months, category budgets, recurring rules, and savings goals:
+To purge any test records and start Orbit completely fresh:
 ```bash
-cd server
-npm run seed
+# From root directory:
+npm run reset
 ```
 
-This creates the pre-configured demo user:
-- **Email**: `demo@orbit.app`
-- **Password**: `password123`
+This cleans all transactions, budgets, recurring rules, and users, while ensuring default system categories (Food, Travel, Rent, Bills, Shopping, Salary, etc.) are verified and ready for any new user.
 
 ### 4. Run Development Servers
 

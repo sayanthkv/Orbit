@@ -18,7 +18,15 @@ import TransactionFormModal from '../components/transactions/TransactionFormModa
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import Button from '../components/common/Button';
 import { CardSkeleton, TableSkeleton } from '../components/common/Skeleton';
-import { Plus, ArrowRight, Sparkles } from 'lucide-react';
+import {
+  Plus,
+  ArrowRight,
+  Sparkles,
+  Receipt,
+  PieChart,
+  Tags,
+  CheckCircle2,
+} from 'lucide-react';
 
 export const DashboardPage = () => {
   const { user } = useAuth();
@@ -58,15 +66,15 @@ export const DashboardPage = () => {
         budgetApi.getBudgets(selectedMonth, selectedYear),
       ]);
 
-      if (sumRes.success) setSummary(sumRes.data);
-      if (breakRes.success) setBreakdown(breakRes.data);
-      if (trendRes.success) setTrends(trendRes.data);
-      if (insRes.success) setInsights(insRes.data);
-      if (txRes.success) setRecentTransactions(txRes.data.transactions);
-      if (catRes.success) setCategories(catRes.data);
-      if (budRes.success) {
-        setBudgets(budRes.data.budgets || []);
-        setBudgetOverview(budRes.data.overview || null);
+      if (sumRes?.success) setSummary(sumRes.data || {});
+      if (breakRes?.success) setBreakdown(breakRes.data || { items: [], totalSum: 0 });
+      if (trendRes?.success) setTrends(trendRes.data || { dailyTrend: [], sixMonthsTrend: [] });
+      if (insRes?.success) setInsights(insRes.data || []);
+      if (txRes?.success) setRecentTransactions(txRes.data?.transactions || []);
+      if (catRes?.success) setCategories(catRes.data || []);
+      if (budRes?.success) {
+        setBudgets(budRes.data?.budgets || []);
+        setBudgetOverview(budRes.data?.overview || null);
       }
     } catch (err) {
       console.error('Dashboard load error', err);
@@ -79,22 +87,23 @@ export const DashboardPage = () => {
     loadDashboardData();
   }, [loadDashboardData]);
 
-  // Global "orbit:open-add-transaction" listener
+  // Listen for transactions created globally
   useEffect(() => {
-    const handleGlobalAdd = () => {
-      setEditingTransaction(null);
-      setIsModalOpen(true);
+    const handleTransactionCreated = () => {
+      loadDashboardData();
     };
-    window.addEventListener('orbit:open-add-transaction', handleGlobalAdd);
-    return () => window.removeEventListener('orbit:open-add-transaction', handleGlobalAdd);
-  }, []);
+    window.addEventListener('orbit:transaction-created', handleTransactionCreated);
+    return () => {
+      window.removeEventListener('orbit:transaction-created', handleTransactionCreated);
+    };
+  }, [loadDashboardData]);
 
   const handleMonthChange = (m, y) => {
     setSelectedMonth(m);
     setSelectedYear(y);
   };
 
-  const handleOpenAdd = () => {
+  const handleOpenCreate = () => {
     setEditingTransaction(null);
     setIsModalOpen(true);
   };
@@ -108,16 +117,22 @@ export const DashboardPage = () => {
     try {
       setIsSubmitting(true);
       if (editingTransaction) {
-        await transactionApi.updateTransaction(editingTransaction._id, formData);
-        toast.success('Transaction updated!');
+        const res = await transactionApi.updateTransaction(editingTransaction._id, formData);
+        if (res.success) {
+          toast.success('Transaction updated!');
+          setIsModalOpen(false);
+          loadDashboardData();
+        }
       } else {
-        await transactionApi.createTransaction(formData);
-        toast.success('Transaction added!');
+        const res = await transactionApi.createTransaction(formData);
+        if (res.success) {
+          toast.success(res.message || 'Transaction recorded!');
+          setIsModalOpen(false);
+          loadDashboardData();
+        }
       }
-      setIsModalOpen(false);
-      loadDashboardData();
     } catch (err) {
-      toast.error(err.message || 'Operation failed');
+      toast.error(err.message || 'Failed to save transaction');
     } finally {
       setIsSubmitting(false);
     }
@@ -127,50 +142,86 @@ export const DashboardPage = () => {
     if (!deletingTransaction) return;
     try {
       setIsDeleting(true);
-      await transactionApi.deleteTransaction(deletingTransaction._id);
-      toast.success('Transaction deleted');
-      setDeletingTransaction(null);
-      loadDashboardData();
+      const res = await transactionApi.deleteTransaction(deletingTransaction._id);
+      if (res.success) {
+        toast.success('Transaction deleted');
+        setDeletingTransaction(null);
+        loadDashboardData();
+      }
     } catch (err) {
-      toast.error('Failed to delete transaction');
+      toast.error(err.message || 'Failed to delete transaction');
     } finally {
       setIsDeleting(false);
     }
   };
 
+  const isBrandNewUser = !loading && recentTransactions.length === 0 && (summary.totalIncome === 0 && summary.totalExpense === 0);
+
   return (
-    <div className="space-y-6">
-      {/* Welcome & Month Selector Header */}
+    <div className="space-y-6 sm:space-y-8">
+      {/* Top Controls: Greeting & Month Picker */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Hi, {user?.name || 'Explorer'}
-            </h1>
-            <Sparkles className="w-5 h-5 text-emerald-500" />
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Overview of your financial orbit and monthly trends
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Hi, {user?.name?.split(' ')[0] || 'there'} 👋
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Here is your financial pulse and overview
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <MonthSelector
-            month={selectedMonth}
-            year={selectedYear}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
             onChange={handleMonthChange}
           />
-          <Button onClick={handleOpenAdd} icon={Plus} size="md">
+          <Button onClick={handleOpenCreate} icon={Plus} size="md">
             Add
           </Button>
         </div>
       </div>
 
-      {/* 4 KPI Cards */}
+      {/* Fresh Onboarding Card for New Users */}
+      {isBrandNewUser && (
+        <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-r from-emerald-950/40 via-slate-900 to-teal-950/30 border border-emerald-500/30 shadow-lg relative overflow-hidden animate-fade-in">
+          <div className="relative z-10 max-w-2xl space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-500/30">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Clean Slate &bull; Fresh Start</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              Welcome to Orbit! Your finances are ready to track.
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Log your initial income or first expense to begin unlocking real-time spending analytics, category breakdowns, and monthly budget alerts.
+            </p>
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <Button onClick={handleOpenCreate} icon={Plus} size="sm">
+                Record First Transaction
+              </Button>
+              <Link
+                to="/categories"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-200 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 transition-colors"
+              >
+                Explore Categories
+              </Link>
+              <Link
+                to="/budgets"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-200 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 transition-colors"
+              >
+                Set a Budget
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4 Key Metric KPI Cards */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <CardSkeleton key={i} />
+          {[...Array(4)].map((_, i) => (
+            <CardSkeleton key={i} className="h-32 rounded-3xl" />
           ))}
         </div>
       ) : (
@@ -180,9 +231,9 @@ export const DashboardPage = () => {
       {/* Smart Insights Alert Ribbon */}
       {!loading && <SmartInsights insights={insights} />}
 
-      {/* Monthly Budget Warnings & Progress (Shown on Dashboard as required) */}
+      {/* Monthly Budget Warnings & Progress (Shown on Dashboard) */}
       {!loading && budgets && budgets.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+        <div className="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-5 sm:p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
@@ -222,7 +273,7 @@ export const DashboardPage = () => {
       <IncomeExpenseBarChart data={trends.sixMonthsTrend} />
 
       {/* Recent Activity Section */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+      <div className="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-5 sm:p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white">
@@ -242,8 +293,15 @@ export const DashboardPage = () => {
         {loading ? (
           <TableSkeleton rows={4} />
         ) : recentTransactions.length === 0 ? (
-          <div className="text-center py-8 text-xs text-slate-400">
-            No recent activity. Click "+ Add" to log your first transaction.
+          <div className="text-center py-10 px-4 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400 space-y-2">
+            <Receipt className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
+            <p className="font-semibold text-slate-600 dark:text-slate-300">No transactions recorded yet</p>
+            <p>Click below to log your first income or expense.</p>
+            <div className="pt-2">
+              <Button onClick={handleOpenCreate} icon={Plus} size="sm">
+                Add Transaction
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-2.5">

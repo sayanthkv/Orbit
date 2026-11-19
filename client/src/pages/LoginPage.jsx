@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, ArrowRight, Sparkles } from 'lucide-react';
+import { Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
 import Logo from '../components/common/Logo';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
@@ -43,56 +43,25 @@ export const LoginPage = () => {
     }
   };
 
-  // Demo account quick login helper for review and evaluation
-  const handleDemoLogin = async () => {
-    setFormData({ email: 'demo@orbit.app', password: 'password123' });
-    setIsLoading(true);
-    const result = await login({ email: 'demo@orbit.app', password: 'password123' });
-    setIsLoading(false);
-    if (result.success) {
-      navigate(from, { replace: true });
-    }
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
-      <div className="w-full max-w-md">
-        {/* Card */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-slate-950">
+      {/* Dynamic ambient background glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="w-full max-w-md relative z-10">
+        <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
           <div className="flex flex-col items-center text-center">
             <Logo size="lg" showTagline={true} className="mb-4" />
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-              Welcome back to Orbit
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              Welcome back
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Sign in to manage and track your finances
+            <p className="text-xs text-slate-400 mt-1.5">
+              Sign in to manage and track your finances in real time
             </p>
           </div>
 
-          {/* Quick Demo Login Banner */}
-          <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <div className="text-left">
-                <p className="text-xs font-semibold text-emerald-900 dark:text-emerald-200">
-                  Try Demo Account
-                </p>
-                <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
-                  Preloaded with realistic transactions & budgets
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              disabled={isLoading}
-              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
-            >
-              Demo Login
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 pt-1">
             <Input
               label="Email Address"
               type="email"
@@ -118,7 +87,7 @@ export const LoginPage = () => {
             <Button
               type="submit"
               size="lg"
-              className="w-full mt-2"
+              className="w-full mt-3 shadow-lg shadow-emerald-600/25"
               isLoading={isLoading}
               icon={ArrowRight}
             >
@@ -126,14 +95,19 @@ export const LoginPage = () => {
             </Button>
           </form>
 
-          <div className="text-center pt-2 border-t border-slate-100 dark:border-slate-800">
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Don't have an Orbit account?{' '}
+          <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500 pt-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Secure 256-bit encrypted authentication</span>
+          </div>
+
+          <div className="text-center pt-3 border-t border-slate-800/80">
+            <p className="text-xs text-slate-400">
+              New to Orbit?{' '}
               <Link
                 to="/register"
-                className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                className="font-semibold text-emerald-400 hover:text-emerald-300 hover:underline transition-colors"
               >
-                Sign up for free
+                Create your account
               </Link>
             </p>
           </div>

@@ -18,13 +18,13 @@ export const TransactionItem = ({ transaction, onEdit, onDelete }) => {
   const PaymentIcon = PAYMENT_METHOD_ICONS[transaction.paymentMethod] || Smartphone;
 
   return (
-    <div className="group flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 hover:border-slate-200 dark:hover:border-slate-700/80 hover:shadow-sm transition-all duration-200">
+    <div className="group flex items-center justify-between p-3 sm:p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/70 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700/80 hover:shadow-xs transition-all duration-150">
       <div className="flex items-center gap-3.5 min-w-0">
-        {/* Category Icon with category brand color */}
+        {/* Category Icon */}
         <div
-          className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105"
+          className="w-10 sm:w-11 h-10 sm:h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-xs transition-transform group-hover:scale-105"
           style={{
-            backgroundColor: `${category.color || '#10B981'}1A`,
+            backgroundColor: `${category.color || '#10B981'}18`,
             color: category.color || '#10B981',
           }}
         >
@@ -34,18 +34,18 @@ export const TransactionItem = ({ transaction, onEdit, onDelete }) => {
         {/* Details */}
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+            <h4 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
               {transaction.note || category.name || 'Untitled'}
             </h4>
-            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
               <PaymentIcon className="w-3 h-3" />
               {transaction.paymentMethod}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-            <span className="font-medium text-slate-600 dark:text-slate-300">
-              {category.name}
+          <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+            <span className="font-medium text-slate-600 dark:text-slate-400">
+              {category.name || 'Uncategorized'}
             </span>
             <span>&bull;</span>
             <span>{formatDate(transaction.date)}</span>
@@ -54,7 +54,7 @@ export const TransactionItem = ({ transaction, onEdit, onDelete }) => {
       </div>
 
       {/* Amount & Actions */}
-      <div className="flex items-center gap-3 sm:gap-4 shrink-0 pl-3">
+      <div className="flex items-center gap-2.5 sm:gap-4 shrink-0 pl-3">
         <div className="text-right">
           <p
             className={`text-sm sm:text-base font-bold tracking-tight ${
@@ -67,10 +67,11 @@ export const TransactionItem = ({ transaction, onEdit, onDelete }) => {
           </p>
         </div>
 
-        {/* Action Buttons (visible on hover / mobile always) */}
-        <div className="flex items-center gap-1 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Action Buttons */}
+        <div className="flex items-center gap-1 opacity-80 sm:opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onEdit(transaction)}
+            type="button"
             className="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
             title="Edit transaction"
             aria-label="Edit transaction"
@@ -79,6 +80,7 @@ export const TransactionItem = ({ transaction, onEdit, onDelete }) => {
           </button>
           <button
             onClick={() => onDelete(transaction)}
+            type="button"
             className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
             title="Delete transaction"
             aria-label="Delete transaction"

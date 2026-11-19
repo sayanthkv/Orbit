@@ -11,7 +11,16 @@ import ConfirmDialog from '../components/common/ConfirmDialog';
 import Button from '../components/common/Button';
 import EmptyState from '../components/common/EmptyState';
 import { TableSkeleton } from '../components/common/Skeleton';
-import { Plus, ChevronLeft, ChevronRight, Receipt, Download } from 'lucide-react';
+import {
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  Receipt,
+  Download,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from 'lucide-react';
 
 export const TransactionsPage = () => {
   const { user } = useAuth();
@@ -47,45 +56,49 @@ export const TransactionsPage = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [deletingTransaction, setDeletingTransaction] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleExportCSV = () => {
-    const params = new URLSearchParams();
-    if (filters.startDate) params.append('startDate', filters.startDate);
-    if (filters.endDate) params.append('endDate', filters.endDate);
-    if (filters.type) params.append('type', filters.type);
-    if (filters.categoryId) params.append('categoryId', filters.categoryId);
-
-    const exportUrl = `${import.meta.env.VITE_API_URL || '/api'}/export/csv?${params.toString()}`;
-    window.open(exportUrl, '_blank');
-    toast.success('Downloading CSV export...');
-  };
-
-  // Load categories for selector
+  // Load categories
   const fetchCategories = async () => {
     try {
       const res = await categoryApi.getCategories();
-      if (res.success) {
-        setCategories(res.data);
+      if (res && res.success) {
+        setCategories(res.data || []);
       }
     } catch (err) {
       console.error('Failed to load categories', err);
     }
   };
 
-  // Load transactions with current filters
+  // Load transactions with filters
   const fetchTransactions = useCallback(async () => {
     try {
       setLoading(true);
       const res = await transactionApi.getTransactions(filters);
-      if (res.success) {
-        setTransactions(res.data.transactions);
-        setPagination(res.data.pagination);
-        setSummary(res.data.summary);
+      if (res && res.success && res.data) {
+        setTransactions(res.data.transactions || []);
+        setPagination(
+          res.data.pagination || {
+            page: 1,
+            limit: 10,
+            totalPages: 1,
+            total: 0,
+            hasNextPage: false,
+            hasPrevPage: false,
+          }
+        );
+        setSummary(
+          res.data.summary || {
+            totalIncome: 0,
+            totalExpense: 0,
+            netBalance: 0,
+          }
+        );
       }
     } catch (err) {
+      console.error('Transaction fetch error:', err);
       toast.error('Failed to load transactions');
     } finally {
       setLoading(false);
@@ -100,21 +113,34 @@ export const TransactionsPage = () => {
     fetchTransactions();
   }, [fetchTransactions]);
 
-  // Listen for global "orbit:open-add-transaction" event from sidebar or mobile plus button
+  // Listen for transactions created globally via AppLayout
   useEffect(() => {
-    const handleGlobalAdd = () => {
-      setEditingTransaction(null);
-      setIsModalOpen(true);
+    const handleTransactionCreated = () => {
+      fetchTransactions();
     };
-    window.addEventListener('orbit:open-add-transaction', handleGlobalAdd);
-    return () => window.removeEventListener('orbit:open-add-transaction', handleGlobalAdd);
-  }, []);
+    window.addEventListener('orbit:transaction-created', handleTransactionCreated);
+    return () => {
+      window.removeEventListener('orbit:transaction-created', handleTransactionCreated);
+    };
+  }, [fetchTransactions]);
+
+  const handleExportCSV = () => {
+    const params = new URLSearchParams();
+    if (filters.startDate) params.append('startDate', filters.startDate);
+    if (filters.endDate) params.append('endDate', filters.endDate);
+    if (filters.type) params.append('type', filters.type);
+    if (filters.categoryId) params.append('categoryId', filters.categoryId);
+
+    const exportUrl = `${import.meta.env.VITE_API_URL || '/api'}/export/csv?${params.toString()}`;
+    window.open(exportUrl, '_blank');
+    toast.success('Downloading transactions CSV...');
+  };
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({
       ...prev,
       [key]: value,
-      page: 1, // reset to page 1 on filter change
+      page: 1,
     }));
   };
 
@@ -193,11 +219,11 @@ export const TransactionsPage = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
             Transactions
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Keep track of all your incoming and outgoing money flows
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Keep clear track of all your income, expenses, and cash flow
           </p>
         </div>
 
@@ -217,6 +243,58 @@ export const TransactionsPage = () => {
         </div>
       </div>
 
+      {/* Summary Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 shadow-xs flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <TrendingUp className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Total Inflow
+            </span>
+            <p className="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+              +{formatCurrency(summary.totalIncome, user?.currency)}
+            </p>
+          </div>
+        </div>
+
+        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 shadow-xs flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+            <TrendingDown className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Total Outflow
+            </span>
+            <p className="text-base sm:text-lg font-bold text-rose-600 dark:text-rose-400 mt-0.5">
+              -{formatCurrency(summary.totalExpense, user?.currency)}
+            </p>
+          </div>
+        </div>
+
+        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 shadow-xs flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
+            <Wallet className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Net Balance
+            </span>
+            <p
+              className={`text-base sm:text-lg font-bold mt-0.5 ${
+                summary.netBalance >= 0
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-rose-600 dark:text-rose-400'
+              }`}
+            >
+              {summary.netBalance >= 0 ? '+' : ''}
+              {formatCurrency(summary.netBalance, user?.currency)}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Filter and Search Bar */}
       <TransactionFilters
         filters={filters}
@@ -224,41 +302,6 @@ export const TransactionsPage = () => {
         onReset={handleResetFilters}
         categories={categories}
       />
-
-      {/* Mini Summary Ribbon */}
-      <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-        <div>
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Total Income
-          </span>
-          <p className="text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
-            +{formatCurrency(summary.totalIncome, user?.currency)}
-          </p>
-        </div>
-        <div className="border-x border-slate-100 dark:border-slate-800">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Total Expenses
-          </span>
-          <p className="text-sm sm:text-base font-bold text-rose-600 dark:text-rose-400 mt-0.5">
-            -{formatCurrency(summary.totalExpense, user?.currency)}
-          </p>
-        </div>
-        <div>
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Net Flow
-          </span>
-          <p
-            className={`text-sm sm:text-base font-bold mt-0.5 ${
-              summary.netBalance >= 0
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-rose-600 dark:text-rose-400'
-            }`}
-          >
-            {summary.netBalance >= 0 ? '+' : ''}
-            {formatCurrency(summary.netBalance, user?.currency)}
-          </p>
-        </div>
-      </div>
 
       {/* Transactions Feed */}
       <div className="space-y-3">
@@ -269,17 +312,17 @@ export const TransactionsPage = () => {
             icon={Receipt}
             title="No transactions found"
             description={
-              filters.search || filters.type || filters.categoryId
+              filters.search || filters.type || filters.categoryId || filters.startDate
                 ? 'No transactions match your current search or filter criteria.'
-                : 'You have not added any transactions yet. Record your first expense or income to begin!'
+                : 'Your ledger is fresh and clean! Record your first transaction to get started.'
             }
             actionLabel={
-              filters.search || filters.type || filters.categoryId
-                ? 'Clear Filters'
+              filters.search || filters.type || filters.categoryId || filters.startDate
+                ? 'Reset Filters'
                 : 'Add Transaction'
             }
             onAction={
-              filters.search || filters.type || filters.categoryId
+              filters.search || filters.type || filters.categoryId || filters.startDate
                 ? handleResetFilters
                 : handleOpenCreate
             }
@@ -301,7 +344,7 @@ export const TransactionsPage = () => {
       {/* Pagination Controls */}
       {pagination.totalPages > 1 && (
         <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-800 text-xs">
-          <span className="text-slate-500 dark:text-slate-400">
+          <span className="text-slate-500 dark:text-slate-400 font-medium">
             Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
             {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
             {pagination.total} records

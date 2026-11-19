@@ -57,6 +57,7 @@ export const CategoriesPage = () => {
           toast.success('Category updated successfully!');
           setIsModalOpen(false);
           fetchCategories();
+          window.dispatchEvent(new CustomEvent('orbit:categories-updated'));
         }
       } else {
         const res = await categoryApi.createCategory(formData);
@@ -64,6 +65,7 @@ export const CategoriesPage = () => {
           toast.success('Category created successfully!');
           setIsModalOpen(false);
           fetchCategories();
+          window.dispatchEvent(new CustomEvent('orbit:categories-updated'));
         }
       }
     } catch (err) {
@@ -82,6 +84,7 @@ export const CategoriesPage = () => {
         toast.success('Category removed successfully.');
         setDeletingCategory(null);
         fetchCategories();
+        window.dispatchEvent(new CustomEvent('orbit:categories-updated'));
       }
     } catch (err) {
       toast.error(err.message || 'Failed to delete category');
