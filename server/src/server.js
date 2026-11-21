@@ -11,6 +11,7 @@ dotenv.config();
 const { connectDB } = require('./config/db');
 const corsOptions = require('./config/cors');
 const errorHandler = require('./middleware/errorHandler');
+const { sanitizeInputs, preventHPP } = require('./middleware/security');
 const { seedDefaultCategories } = require('./services/seedService');
 
 // Route imports
@@ -19,19 +20,35 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const budgetRoutes = require('./routes/budgetRoutes');
-const recurringRoutes = require('./routes/recurringRoutes');
 const goalRoutes = require('./routes/goalRoutes');
 const exportRoutes = require('./routes/exportRoutes');
-const { initCron } = require('./services/cronService');
+const accountRoutes = require('./routes/accountRoutes');
 
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// Trust reverse proxy (Essential for Render.com, Cloudflare, rate limiting & secure cookies)
+app.set('trust proxy', 1);
+
+// Standard Security Headers
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: false, // Handled by frontend client SPA
+    frameguard: { action: 'deny' }, // Clickjacking protection
+    noSniff: true, // X-Content-Type-Options: nosniff
+    xssFilter: true, // X-XSS-Protection
+  })
+);
 app.use(cors(corsOptions));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Safe body size limits (prevents payload exhaustion / denial of service)
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(cookieParser());
+
+// NoSQL Injection Sanitization & HTTP Parameter Pollution (HPP) Prevention
+app.use(sanitizeInputs);
+app.use(preventHPP(['category', 'tags']));
 
 // Global Rate Limiting
 const globalLimiter = rateLimit({
@@ -76,10 +93,10 @@ app.get('/api/health', (req, res) => {
 // Mount Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/accounts', accountRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/budgets', budgetRoutes);
-app.use('/api/recurring', recurringRoutes);
 app.use('/api/goals', goalRoutes);
 app.use('/api/export', exportRoutes);
 
@@ -100,7 +117,6 @@ const startServer = async () => {
   try {
     await connectDB();
     await seedDefaultCategories();
-    initCron();
 
     const server = app.listen(PORT, () => {
       console.log(`🚀 Orbit API Server running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);

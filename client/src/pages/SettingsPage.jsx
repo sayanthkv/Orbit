@@ -29,35 +29,40 @@ export const SettingsPage = () => {
     setIsSaving(false);
   };
 
+  const sectionClass = 'bg-white border border-zinc-200/90 shadow-sm dark:bg-[#111113] dark:border-white/8 rounded-2xl p-6 space-y-5 transition-colors';
+  const labelClass = 'text-xs font-semibold text-zinc-500 uppercase tracking-wider';
+
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-2xl space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Settings</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100">Settings</h1>
+        <p className="text-xs text-zinc-500 mt-1">
           Manage your account profile and display preferences.
         </p>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
-        <h2 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <User className="w-4 h-4 text-emerald-600" />
+      {/* Profile Details */}
+      <div className={sectionClass}>
+        <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-200 flex items-center gap-2">
+          <User className="w-4 h-4 text-emerald-600 dark:text-zinc-500" />
           Profile Details
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="text-xs text-slate-400">Full Name</span>
-            <p className="font-medium text-slate-800 dark:text-slate-200">{user?.name}</p>
+            <span className={labelClass}>Full Name</span>
+            <p className="font-semibold text-zinc-900 dark:text-zinc-200 mt-1">{user?.name}</p>
           </div>
           <div>
-            <span className="text-xs text-slate-400">Email Address</span>
-            <p className="font-medium text-slate-800 dark:text-slate-200">{user?.email}</p>
+            <span className={labelClass}>Email Address</span>
+            <p className="font-semibold text-zinc-900 dark:text-zinc-200 mt-1">{user?.email}</p>
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSave} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6">
-        <h2 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-          <DollarSign className="w-4 h-4 text-emerald-600" />
+      {/* Currency & Display */}
+      <form onSubmit={handleSave} className={sectionClass}>
+        <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-200 flex items-center gap-2">
+          <DollarSign className="w-4 h-4 text-emerald-600 dark:text-zinc-500" />
           Currency & Display Preferences
         </h2>
 
@@ -69,27 +74,23 @@ export const SettingsPage = () => {
             onChange={(e) => setCurrency(e.target.value)}
           />
 
-          <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-850">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 dark:bg-white/[0.03] dark:border-white/8 transition-colors">
             <div>
-              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                Interface Theme
-              </p>
-              <p className="text-xs text-slate-400">
-                Switch between Light and Dark mode
-              </p>
+              <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-200">Interface Theme</p>
+              <p className="text-xs text-zinc-500 mt-0.5">Switch between Light and Dark mode</p>
             </div>
             <button
               type="button"
               onClick={toggleTheme}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium"
+              className="flex items-center gap-2 px-4 py-2 rounded-full border border-zinc-300 bg-white hover:bg-zinc-100 text-xs font-semibold text-zinc-800 shadow-xs dark:border-white/12 dark:bg-[#1c1c20] dark:hover:bg-[#27272a] dark:text-zinc-300 transition-colors cursor-pointer"
             >
               {theme === 'dark' ? (
                 <>
-                  <Sun className="w-4 h-4 text-amber-500" /> Light
+                  <Sun className="w-4 h-4 text-amber-400" /> Light Mode
                 </>
               ) : (
                 <>
-                  <Moon className="w-4 h-4 text-blue-500" /> Dark
+                  <Moon className="w-4 h-4 text-zinc-700" /> Dark Mode
                 </>
               )}
             </button>

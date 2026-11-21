@@ -11,14 +11,14 @@ export const EmptyState = ({
   className = '',
 }) => {
   return (
-    <div className={`flex flex-col items-center justify-center p-8 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/20 ${className}`}>
-      <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-4">
+    <div className={`flex flex-col items-center justify-center py-12 px-6 text-center rounded-2xl border border-dashed border-zinc-200 dark:border-white/10 bg-zinc-50/50 dark:bg-white/[0.015] ${className} transition-colors`}>
+      <div className="w-14 h-14 rounded-2xl bg-zinc-100 text-zinc-500 dark:bg-white/8 dark:text-zinc-400 flex items-center justify-center mb-4 shadow-xs">
         <Icon className="w-7 h-7" />
       </div>
-      <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
+      <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-200 mb-1">
         {title}
       </h3>
-      <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-5">
+      <p className="text-xs text-zinc-500 max-w-sm mb-5 leading-relaxed">
         {description}
       </p>
       {actionLabel && onAction && (

@@ -21,6 +21,8 @@ const preferencesSchema = z.object({
     currency: z.enum(['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'CAD', 'AUD', 'JPY']).optional(),
     themePreference: z.enum(['light', 'dark', 'system']).optional(),
     name: z.string().min(2).max(60).optional(),
+    initialBalance: z.coerce.number().optional(),
+    hasSetInitialBalance: z.boolean().optional(),
   }),
 });
 

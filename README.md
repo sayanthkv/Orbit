@@ -1,259 +1,226 @@
-# Orbit
+# Orbit 🪐
 
-> **"Know where your money goes"**
-
-Orbit is a production-quality personal expense tracker web application built on the **MERN stack** (MongoDB, Express, React, Node.js). It provides real-time financial tracking, multi-criteria transaction filtering, interactive spending analytics, category budgeting with 80% and 100% threshold alerts, recurring transaction automation via node-cron, and savings goals tracking.
-
----
-
-## 🌟 Key Features
-
-- **Auth & Security**: JWT stored in `httpOnly` secure cookies with cross-domain support, bcryptjs password hashing, Helmet HTTP headers, and strict rate-limiting.
-- **Transactions Management**: Full CRUD for expenses and income with server-side pagination, date range filtering, category and payment method filters, and fast keyword note search.
-- **Dashboard & Interactive Analytics**:
-  - 4 Key Metric KPI Cards (Total Income, Total Expense, Net Balance, Savings Rate %) with Month-over-Month (MoM) indicators.
-  - Category-wise Spending Donut Chart with custom hover tooltips.
-  - Daily Spending Progression Area Chart throughout the selected month.
-  - 6-Month Income vs Expense historical bar comparison.
-  - Automated Smart Financial Insights (detects category spending spikes, savings highlights, and primary outflows).
-- **Monthly Budgets**:
-  - Category spending caps with live visual progress bars.
-  - **80% Warning Flag** (Amber) and **100% Exceeded Alert** (Rose) visible directly on the Dashboard and Budgets page.
-- **Recurring Transactions**: Background scheduler powered by `node-cron` that automatically creates scheduled transactions when due (weekly, monthly, yearly).
-- **Custom Category Manager**: Color palette & Lucide icon picker with transaction safety deletion guards.
-- **Savings Goals**: Milestone progress rings and deposit tracker.
-- **Data Export**: Direct CSV streaming of transactions with applied filters.
-- **Responsive Mobile-First UI**: Desktop sidebar + mobile bottom navigation bar with thumb-friendly controls, dark mode toggle, loading skeletons, and delete confirmation dialogs.
+> **Modern Personal Finance & Expense Tracker**  
+> Built with React 19, Tailwind CSS, Express, Node.js, and MongoDB Atlas.  
+> Ready for seamless deployment on **Vercel** (Frontend) & **Render** (Backend).
 
 ---
 
-## 🏗️ Architecture & Monorepo Structure
+## 🌟 Overview
+
+**Orbit** is a modern, high-performance personal finance web application designed to help you track expenses, analyze cashflow trends, manage multi-bank accounts, and monitor your true net worth with a distraction-free, responsive interface.
+
+Designed with both **Dark Mode** and **Light Mode** first-class support, Orbit pairs an intuitive floating capsule navigation with real-time analytics, interactive pie and bar charts, category budgeting, and multi-institution portfolio management.
+
+---
+
+## ✨ Key Features
+
+### 1. 🏛️ Multi-Account & Portfolio Management
+- **Dedicated Accounts Workspace**: Manage separate bank accounts, credit/debit cards, cash wallets, and savings deposits with custom bank names and masked account numbers (`•••• 9286`).
+- **Single-Account Dashboard**: The home page isolates and tracks **one active account** at a time. Switch between accounts via the touch-friendly account switcher bar.
+- **Dedicated Combined Portfolio Page (`/accounts/combined`)**: View-only aggregate portfolio showing your total calculated net worth, institution asset distribution, and unified multi-account chronological spending history.
+- **Strictly View-Only Protection**: No accidental balance modification buttons in the combined view.
+
+### 2. 📊 Interactive Graphs & Visual Analytics
+- **Category Donut / Pie Chart with Type Switcher**:
+  - Toggle between **Expense Breakdown** and **Income Sources** to visualize where money was spent or earned.
+  - Interactive central total display, percentages, and hover tooltips.
+- **Spending Velocity vs. Cumulative Burn Curve**:
+  - Toggle between **Daily Outflow Spikes** (exact spending days) and **Cumulative Month-to-Date Burn** area curve.
+- **6-Month Cash Flow Velocity Comparison**:
+  - Side-by-side monthly bar chart comparing **Inflow (green)** vs **Outflow (rose)**.
+  - Floating tooltip automatically computes and displays monthly **Net Savings**.
+- **Portfolio Asset Allocation Pie Chart**:
+  - Recharts donut chart on the Combined Portfolio page displaying the percentage spread across each connected bank account.
+
+### 3. 💳 Responsive Modals & Quick Logging
+- **Cinematic Backdrop Overlay**: High-blur backdrop (`backdrop-blur-md bg-black/75`) that keeps focus strictly on the entry modal.
+- **Mobile-First Responsive Modals**:
+  - Full-width touch targets with decimal numeric keypad trigger (`inputMode="decimal"`).
+  - Dynamic headers for **Log Expense** vs **Log Income**.
+  - Background scrolling is automatically locked when modals are open.
+  - Responsive button stacks on mobile screens (`flex-col-reverse sm:flex-row`).
+
+### 4. 🛡️ Industry-Standard Security Architecture
+- **NoSQL Query Injection Sanitizer**: Automatically cleans `req.body`, `req.query`, and `req.params`, stripping any MongoDB injection operators (`$gt`, `$where`, `$ne`) and prototype pollution paths (`.`).
+- **HTTP Parameter Pollution (HPP) Prevention**: Normalizes incoming query arrays to prevent parameter pollution.
+- **Malformed ObjectId Validation**: Intercepts invalid IDs on routes (`/api/accounts/:id`, `/api/transactions/:id`) with clean `400 Bad Request` responses before Mongoose hits internal 500 CastErrors.
+- **Helmet Security Headers**: Clickjacking protection (`frameguard: deny`), MIME-sniffing prevention (`noSniff`), XSS protection, and cross-origin resource policy.
+- **Reverse Proxy Trust**: `app.set('trust proxy', 1)` enabled for secure HTTPS cookies and accurate IP rate limiting on Render and Cloudflare.
+- **Credential Protection**: Explicit HTML5 `autoComplete` attributes on authentication forms for password manager integration.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technologies |
+|---|---|
+| **Frontend** | React 19, Vite, Tailwind CSS, Lucide Icons, Recharts, Axios, React Router v7 |
+| **Backend** | Node.js, Express 4, Mongoose, Zod, JWT, bcryptjs, Helmet, Express Rate Limit |
+| **Database** | MongoDB Atlas / Local MongoDB |
+| **Hosting** | Vercel (Frontend SPA) + Render.com (Backend Web Service) |
+
+---
+
+## 📁 Project Structure
 
 ```text
 Orbit/
-├── package.json                 # Monorepo runner scripts (concurrently)
-├── README.md                    # Project documentation
-├── server/                      # Express & Node.js backend (orbit-server)
-│   ├── package.json
-│   ├── .env.example
-│   ├── render.yaml              # Render deployment configuration
-│   └── src/
-│       ├── config/              # MongoDB connection & CORS whitelist
-│       ├── models/              # Mongoose schemas (User, Category, Transaction, Budget, Recurring, Goal)
-│       ├── controllers/         # REST API business logic
-│       ├── routes/              # Express API routers
-│       ├── middleware/          # JWT auth, Zod validation, error handler
-│       ├── services/            # node-cron scheduler & default category seeder
-│       ├── validations/         # Zod request payload schemas
-│       ├── scripts/             # Standalone seed and test scripts
-│       └── server.js            # Express app entry point
-└── client/                      # React & Vite frontend (orbit-client)
-    ├── package.json
-    ├── .env.example
-    ├── vercel.json              # Vercel SPA rewrite configuration
-    ├── index.html
-    └── src/
-        ├── api/                 # Axios clients with withCredentials: true
-        ├── context/             # AuthContext, ThemeContext, ToastContext
-        ├── components/          # Reusable UI, Layout, Charts, Modals
-        ├── pages/               # Dashboard, Transactions, Budgets, Recurring, Categories, Goals, Settings
-        └── utils/               # Formatters (INR/USD), icon mappers, constants
+├── vercel.json                    # Root Vercel deployment configuration
+├── package.json                   # Monorepo scripts (dev runner)
+├── README.md                      # Project documentation
+├── server/                        # Express API Backend
+│   ├── src/
+│   │   ├── config/                # Database connection & CORS configuration
+│   │   ├── controllers/           # account, transaction, analytics, budget controllers
+│   │   ├── middleware/            # auth, errorHandler, validate, security (NoSQL & HPP)
+│   │   ├── models/                # User, Account, Transaction, Category, Budget
+│   │   ├── routes/                # Express API routes
+│   │   ├── services/              # Default category seed service
+│   │   ├── validations/           # Zod payload schemas
+│   │   └── server.js              # Server entry point with reverse-proxy trust
+│   └── .env                       # Backend environment variables
+└── client/                        # React Vite Frontend
+    ├── vercel.json                # Client-specific Vercel SPA rewrite rules
+    ├── src/
+    │   ├── api/                   # Axios API clients with dynamic VITE_API_URL resolution
+    │   ├── components/
+    │   │   ├── accounts/          # AccountCard, AccountFormModal, AssetAllocationPieChart
+    │   │   ├── common/            # Button, Input, Select, Modal, ConfirmDialog, Skeleton
+    │   │   ├── dashboard/         # HeroBalanceCard, CategoryDonutChart, SpendingTrendChart, CashflowTrendChart
+    │   │   ├── layout/            # Navbar, BottomNav, AppLayout, ProtectedRoute
+    │   │   └── transactions/      # TransactionItem, TransactionFormModal, TransactionFilters
+    │   ├── context/               # AuthContext, ThemeContext, AccountContext, ToastContext
+    │   ├── pages/                 # DashboardPage, AccountsPage, CombinedAccountsPage, TransactionsPage...
+    │   └── utils/                 # Currency formatters, icon mapping, constants
+    └── vite.config.js             # Vite build configuration
 ```
 
 ---
 
-## 🚀 Quick Start Guide
+## 🚀 Local Development Setup
 
-### Prerequisites
-- Node.js (v18 or higher)
-- MongoDB (Local daemon or free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster)
+### 1. Prerequisites
+- **Node.js** (v18.x or higher)
+- **npm** or **pnpm**
+- **MongoDB Atlas** cluster URI
 
-### 1. Clone & Install Dependencies
-
-From the repository root:
+### 2. Install Dependencies
 ```bash
-# Install root orchestration tools
-npm install
-
-# Install server dependencies
+# Install backend dependencies
 cd server
 npm install
 
-# Install client dependencies
+# Install frontend dependencies
 cd ../client
 npm install
-
-# Return to root
-cd ..
 ```
 
-### 2. Configure Environment Variables
-
-**Server (`server/.env`):**
+### 3. Backend Environment (`server/.env`)
+Create or edit `server/.env`:
 ```env
 PORT=5000
 NODE_ENV=development
-MONGO_URI=mongodb://127.0.0.1:27017/orbit
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/orbit?retryWrites=true&w=majority
 JWT_SECRET=super_secret_orbit_jwt_key_development_change_in_production
 JWT_EXPIRES_IN=7d
 CLIENT_URL=http://localhost:5173
 COOKIE_SECURE=false
 ```
 
-**Client (`client/.env`):**
-```env
-VITE_API_URL=http://localhost:5000/api
-```
+### 4. Run Locally
+In separate terminals:
 
-### 3. Reset Database to Clean Slate
-
-To purge any test records and start Orbit completely fresh:
 ```bash
-# From root directory:
-npm run reset
-```
+# Terminal 1: Start Backend (Port 5000)
+cd server
+npm run dev
 
-This cleans all transactions, budgets, recurring rules, and users, while ensuring default system categories (Food, Travel, Rent, Bills, Shopping, Salary, etc.) are verified and ready for any new user.
-
-### 4. Run Development Servers
-
-Run both the backend API and frontend Vite dev server concurrently:
-```bash
-# From root directory:
+# Terminal 2: Start Frontend (Port 5173)
+cd client
 npm run dev
 ```
-- **Frontend App**: `http://localhost:5173`
-- **Backend API**: `http://localhost:5000/api`
+
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+## 🚢 Production Deployment Guide
+
+### Part A: Deploying Backend on Render.com
+
+1. **Create Web Service**:
+   - Go to [dashboard.render.com](https://dashboard.render.com/) and click **New → Web Service**.
+   - Connect your GitHub repository.
+2. **Configure Service**:
+   - **Name**: `orbit-backend` (or your chosen name)
+   - **Root Directory**: `server`
+   - **Runtime**: `Node`
+   - **Build Command**: `npm install`
+   - **Start Command**: `node src/server.js` (or `npm start`)
+3. **Environment Variables**:
+   Add the following in the **Environment** tab:
+   | Key | Value | Notes |
+   |---|---|---|
+   | `NODE_ENV` | `production` | Enables production cookie flags & security checks |
+   | `MONGO_URI` | `mongodb+srv://...` | Your MongoDB Atlas connection string |
+   | `JWT_SECRET` | *(Random 32+ character string)* | Secure secret key for signing JWTs |
+   | `JWT_EXPIRES_IN` | `7d` | Token lifetime |
+   | `CLIENT_URL` | `https://your-frontend.vercel.app` | Your Vercel frontend URL (comma-separated if multiple) |
+   | `COOKIE_SECURE` | `true` | Enforces HTTPS-only cookies |
+4. **Deploy**:
+   - Click **Create Web Service**.
+   - Once deployed, copy your backend URL (e.g. `https://orbit-backend.onrender.com`).
+
+---
+
+### Part B: Deploying Frontend on Vercel
+
+1. **Import Project**:
+   - Go to [vercel.com](https://vercel.com/) and click **Add New → Project**.
+   - Select your GitHub repository.
+2. **Configure Project Settings**:
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: Click edit and select `client` (or leave as `./` — root `vercel.json` will route to `client` automatically).
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+3. **Environment Variables**:
+   Add the following variable:
+   | Key | Value | Notes |
+   |---|---|---|
+   | `VITE_API_URL` | `https://orbit-backend.onrender.com/api` | Point to your Render service URL with `/api` |
+4. **Deploy**:
+   - Click **Deploy**.
+   - Your frontend will be live at `https://<your-project>.vercel.app`.
+   - Update `CLIENT_URL` on Render to match this Vercel domain.
 
 ---
 
 ## 📡 REST API Reference
 
-All API endpoints follow a standard response envelope:
-```json
-{
-  "success": true,
-  "message": "Operation successful",
-  "data": { ... }
-}
-```
-
-### 🔐 Authentication (`/api/auth`)
-| Method | Endpoint | Description | Access |
+| Endpoint | Method | Description | Access |
 |---|---|---|---|
-| `POST` | `/api/auth/register` | Register a new user | Public |
-| `POST` | `/api/auth/login` | Login and set httpOnly cookie | Public |
-| `POST` | `/api/auth/logout` | Clear session cookie | Public |
-| `GET` | `/api/auth/me` | Fetch authenticated user profile | Protected |
-| `PATCH` | `/api/auth/preferences` | Update currency & theme | Protected |
-
-### 💳 Transactions (`/api/transactions`)
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/transactions` | Paginated list with search & multi-filter (`startDate`, `endDate`, `type`, `categoryId`, `paymentMethod`, `search`, `page`, `limit`) |
-| `POST` | `/api/transactions` | Create new transaction |
-| `GET` | `/api/transactions/:id` | Get transaction by ID |
-| `PUT` | `/api/transactions/:id` | Update transaction |
-| `DELETE` | `/api/transactions/:id` | Delete transaction |
-
-### 🏷️ Categories (`/api/categories`)
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/categories` | Get all default and custom categories |
-| `POST` | `/api/categories` | Create custom category |
-| `PUT` | `/api/categories/:id` | Update custom category |
-| `DELETE` | `/api/categories/:id` | Delete custom category (with transaction safety check) |
-
-### 📊 Analytics & Dashboard (`/api/analytics`)
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/analytics/summary` | KPI cards summary (Income, Expense, Balance, Savings Rate %, MoM change) |
-| `GET` | `/api/analytics/category-breakdown` | Category distribution data for donut chart |
-| `GET` | `/api/analytics/trends` | Daily spending progression & 6-month historical trends |
-| `GET` | `/api/analytics/insights` | Month-over-month category spending surge & savings insights |
-
-### 🎯 Budgets (`/api/budgets`)
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/budgets` | Category limits, amount spent, remaining, and 80%/100% alert status |
-| `POST` | `/api/budgets` | Set or update monthly budget |
-| `DELETE` | `/api/budgets/:id` | Delete category budget |
-
-### 🔁 Recurring Transactions (`/api/recurring`)
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/recurring` | List recurring schedule rules |
-| `POST` | `/api/recurring` | Create recurring schedule |
-| `PUT` | `/api/recurring/:id` | Update schedule or toggle active/paused |
-| `DELETE` | `/api/recurring/:id` | Delete schedule |
-| `POST` | `/api/recurring/process` | Manually trigger cron engine to process due entries |
-
-### 💰 Savings Goals (`/api/goals`)
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/goals` | List all savings milestones |
-| `POST` | `/api/goals` | Create new savings target |
-| `PUT` | `/api/goals/:id` | Edit goal |
-| `POST` | `/api/goals/:id/deposit` | Deposit funds towards goal |
-| `DELETE` | `/api/goals/:id` | Delete goal |
-
-### 📥 Export (`/api/export`)
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/export/csv` | Download CSV spreadsheet of transactions |
-
----
-
-## 🌐 Production Deployment Guide
-
-### Database: MongoDB Atlas
-1. Create a free cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
-2. Create a database user and whitelist network access (`0.0.0.0/0` for cloud deployment).
-3. Copy your connection string: `mongodb+srv://<user>:<password>@cluster0.mongodb.net/orbit?retryWrites=true&w=majority`.
-
-### Backend: Render
-1. Connect your repository to [Render](https://render.com) as a **Web Service**.
-2. Root Directory: `server`.
-3. Build Command: `npm install`.
-4. Start Command: `node src/server.js`.
-5. Environment Variables:
-   - `NODE_ENV`: `production`
-   - `MONGO_URI`: `<Your MongoDB Atlas connection URI>`
-   - `JWT_SECRET`: `<A random 64-character string>`
-   - `JWT_EXPIRES_IN`: `7d`
-   - `CLIENT_URL`: `https://your-orbit-app.vercel.app`
-   - `COOKIE_SECURE`: `true`
-
-### Frontend: Vercel
-1. Connect your repository to [Vercel](https://vercel.com).
-2. Root Directory: `client`.
-3. Framework Preset: `Vite`.
-4. Environment Variables:
-   - `VITE_API_URL`: `https://your-orbit-api.onrender.com/api`
-5. Deploy! The included `vercel.json` ensures client-side routing works seamlessly across page reloads.
-
----
-
-## 🧪 Verification & Automated Testing
-
-Orbit includes end-to-end automated verification test scripts for every phase:
-```bash
-cd server
-
-# Verify Phase 1: Foundation (Auth, JWT cookies, default categories)
-node src/scripts/testPhase1.js
-
-# Verify Phase 2: Core Tracking (CRUD, pagination, multi-filter, search)
-node src/scripts/testPhase2.js
-
-# Verify Phase 3: Analytics (Summary KPIs, MoM insights, donut/area/bar aggregations)
-node src/scripts/testPhase3.js
-
-# Verify Phase 4: Budgets & Recurring (80% & 100% threshold alerts, node-cron processing)
-node src/scripts/testPhase4.js
-```
+| `/api/auth/register` | `POST` | Register a new user | Public |
+| `/api/auth/login` | `POST` | Login & set secure auth cookie | Public |
+| `/api/auth/me` | `GET` | Get authenticated profile | Private |
+| `/api/auth/logout` | `POST` | Clear auth token cookie | Private |
+| `/api/accounts` | `GET` | Get all accounts + aggregated summary | Private |
+| `/api/accounts` | `POST` | Create a new bank/cash account | Private |
+| `/api/accounts/:id` | `GET` | Get account details by ID | Private |
+| `/api/accounts/:id` | `PUT` | Update bank account & baseline balance | Private |
+| `/api/accounts/:id` | `DELETE`| Remove account (safely guarded if records exist)| Private |
+| `/api/transactions` | `GET` | Filtered & paginated transactions | Private |
+| `/api/transactions` | `POST` | Record an expense or income entry | Private |
+| `/api/transactions/:id`| `PUT` | Update existing transaction record | Private |
+| `/api/transactions/:id`| `DELETE`| Delete transaction | Private |
+| `/api/analytics/summary` | `GET` | Inflow, Outflow, Balance & MoM delta | Private |
+| `/api/analytics/category-breakdown` | `GET` | Category distribution for Donut/Pie charts | Private |
+| `/api/analytics/trends` | `GET` | Daily velocity & 6-month cashflow data | Private |
+| `/api/budgets` | `GET` | Category budget tracking & threshold alerts | Private |
 
 ---
 
 ## 📄 License
-MIT &copy; 2026 Orbit Team. Know where your money goes.
+
+This project is open-source and available under the [MIT License](LICENSE).

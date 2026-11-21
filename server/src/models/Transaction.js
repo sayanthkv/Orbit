@@ -42,6 +42,11 @@ const transactionSchema = new mongoose.Schema(
       enum: ['cash', 'UPI', 'card', 'bank'],
       default: 'UPI',
     },
+    account: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Account',
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -58,6 +63,7 @@ const transactionSchema = new mongoose.Schema(
 transactionSchema.index({ user: 1, date: -1 });
 transactionSchema.index({ user: 1, type: 1, date: -1 });
 transactionSchema.index({ user: 1, category: 1, date: -1 });
+transactionSchema.index({ user: 1, account: 1, date: -1 });
 transactionSchema.index({ note: 'text' });
 
 const Transaction = mongoose.model('Transaction', transactionSchema);

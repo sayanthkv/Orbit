@@ -3,77 +3,88 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   Receipt,
+  Wallet,
   PieChart,
+  Tag,
   Plus,
-  Menu,
 } from 'lucide-react';
 
-export const BottomNav = ({ onOpenAddModal, onToggleMobileMenu }) => {
+export const BottomNav = ({ onOpenAddModal }) => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-30 md:hidden bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800/80 px-2 py-1.5 flex items-center justify-around shadow-lg">
-      <NavLink
-        to="/"
-        end
-        className={({ isActive }) =>
-          `flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-[10px] font-semibold transition-all ${
-            isActive
-              ? 'text-emerald-600 dark:text-emerald-400'
-              : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-          }`
-        }
-      >
-        <LayoutDashboard className="w-5 h-5" />
-        <span>Home</span>
-      </NavLink>
+    <div className="fixed bottom-3 left-3 right-3 z-30 md:hidden">
+      {/* Outer Pill */}
+      <div className="bg-white/95 border border-zinc-200/90 shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:bg-[#141418] dark:border-white/12 dark:shadow-[0_16px_40px_rgba(0,0,0,0.85)] rounded-full p-1.5 backdrop-blur-md transition-colors">
+        {/* Inner Track */}
+        <nav className="bg-zinc-100/90 dark:bg-[#1e1e26] rounded-full p-1 flex items-center justify-between transition-colors">
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center py-1.5 px-3 rounded-full text-[10px] font-bold transition-all ${
+                isActive
+                  ? 'bg-zinc-950 text-white shadow-sm dark:bg-white dark:text-zinc-950'
+                  : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white'
+              }`
+            }
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            <span className="text-[9px] mt-0.5">Home</span>
+          </NavLink>
 
-      <NavLink
-        to="/transactions"
-        className={({ isActive }) =>
-          `flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-[10px] font-semibold transition-all ${
-            isActive
-              ? 'text-emerald-600 dark:text-emerald-400'
-              : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-          }`
-        }
-      >
-        <Receipt className="w-5 h-5" />
-        <span>Transactions</span>
-      </NavLink>
+          <NavLink
+            to="/accounts"
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center py-1.5 px-3 rounded-full text-[10px] font-bold transition-all ${
+                isActive
+                  ? 'bg-zinc-950 text-white shadow-sm dark:bg-white dark:text-zinc-950'
+                  : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white'
+              }`
+            }
+          >
+            <Wallet className="w-4 h-4" />
+            <span className="text-[9px] mt-0.5">Accounts</span>
+          </NavLink>
 
-      {/* Center Floating Plus CTA */}
-      <button
-        onClick={onOpenAddModal}
-        type="button"
-        className="-mt-5 w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white flex items-center justify-center shadow-lg shadow-emerald-600/40 active:scale-90 transition-transform cursor-pointer border-2 border-white dark:border-slate-950"
-        aria-label="Add transaction"
-      >
-        <Plus className="w-6 h-6 stroke-[2.5]" />
-      </button>
+          {/* Action Capsule in Center */}
+          <button
+            onClick={onOpenAddModal}
+            type="button"
+            className="px-3.5 py-2 rounded-full bg-emerald-600 text-white dark:bg-emerald-500 dark:text-zinc-950 shadow-md active:scale-90 transition-transform cursor-pointer flex items-center justify-center"
+            aria-label="Add transaction"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+          </button>
 
-      <NavLink
-        to="/budgets"
-        className={({ isActive }) =>
-          `flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-[10px] font-semibold transition-all ${
-            isActive
-              ? 'text-emerald-600 dark:text-emerald-400'
-              : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-          }`
-        }
-      >
-        <PieChart className="w-5 h-5" />
-        <span>Budgets</span>
-      </NavLink>
+          <NavLink
+            to="/transactions"
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center py-1.5 px-3 rounded-full text-[10px] font-bold transition-all ${
+                isActive
+                  ? 'bg-zinc-950 text-white shadow-sm dark:bg-white dark:text-zinc-950'
+                  : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white'
+              }`
+            }
+          >
+            <Receipt className="w-4 h-4" />
+            <span className="text-[9px] mt-0.5">Expenses</span>
+          </NavLink>
 
-      <button
-        onClick={onToggleMobileMenu}
-        type="button"
-        className="flex flex-col items-center gap-1 py-1 px-3 rounded-xl text-[10px] font-semibold text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all cursor-pointer"
-        aria-label="Open more menu"
-      >
-        <Menu className="w-5 h-5" />
-        <span>Menu</span>
-      </button>
-    </nav>
+          <NavLink
+            to="/budgets"
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center py-1.5 px-3 rounded-full text-[10px] font-bold transition-all ${
+                isActive
+                  ? 'bg-zinc-950 text-white shadow-sm dark:bg-white dark:text-zinc-950'
+                  : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white'
+              }`
+            }
+          >
+            <PieChart className="w-4 h-4" />
+            <span className="text-[9px] mt-0.5">Budgets</span>
+          </NavLink>
+        </nav>
+      </div>
+    </div>
   );
 };
 

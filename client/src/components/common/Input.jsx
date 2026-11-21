@@ -15,30 +15,25 @@ export const Input = ({
   return (
     <div className="w-full flex flex-col gap-1.5">
       {label && (
-        <label
-          htmlFor={inputId}
-          className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between"
-        >
-          <span>
-            {label} {required && <span className="text-rose-500">*</span>}
-          </span>
+        <label htmlFor={inputId} className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
+          {label} {required && <span className="text-rose-500">*</span>}
         </label>
       )}
       <div className="relative flex items-center">
         {Icon && (
-          <div className="absolute left-3.5 text-slate-400 dark:text-slate-500 pointer-events-none flex items-center">
+          <div className="absolute left-4 text-zinc-400 dark:text-zinc-500 pointer-events-none flex items-center">
             <Icon className="w-4 h-4" />
           </div>
         )}
         <input
           id={inputId}
           type={type}
-          className={`w-full rounded-xl border bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 px-3.5 py-2.5 text-sm transition-all outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-offset-1 dark:focus:ring-offset-slate-950 ${
-            Icon ? 'pl-10' : ''
+          className={`w-full rounded-2xl px-4 py-2.5 text-sm font-medium transition-all outline-none border ${
+            Icon ? 'pl-11' : ''
           } ${
             error
-              ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/20'
-              : 'border-slate-200 dark:border-slate-800 focus:border-emerald-500 focus:ring-emerald-500/20'
+              ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20'
+              : 'border-zinc-200 bg-white text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-400/15 dark:border-white/10 dark:bg-[#1c1c20] dark:text-zinc-100 dark:placeholder:text-zinc-600 dark:focus:border-white/30 dark:focus:ring-white/10'
           } ${className}`}
           {...props}
         />

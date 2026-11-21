@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import Sidebar from './Sidebar';
-import Header from './Header';
+import Navbar from './Navbar';
 import BottomNav from './BottomNav';
-import MobileDrawer from './MobileDrawer';
 import TransactionFormModal from '../transactions/TransactionFormModal';
 import { categoryApi } from '../../api/categoryApi';
 import { transactionApi } from '../../api/transactionApi';
@@ -11,7 +9,6 @@ import { useToast } from '../../context/ToastContext';
 
 export const AppLayout = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
@@ -58,7 +55,6 @@ export const AppLayout = () => {
       if (res.success) {
         toast.success(res.message || 'Transaction recorded successfully!');
         setIsAddModalOpen(false);
-        // Dispatch global notification so active pages reload their data
         window.dispatchEvent(
           new CustomEvent('orbit:transaction-created', { detail: res.data })
         );
@@ -71,34 +67,32 @@ export const AppLayout = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
-      {/* Desktop Sidebar */}
-      <Sidebar onOpenAddModal={handleOpenAddModal} />
-
-      {/* Main Content Column */}
-      <div className="flex-1 flex flex-col min-w-0 pb-20 md:pb-8">
-        <Header
-          onOpenAddModal={handleOpenAddModal}
-          onToggleMobileMenu={() => setIsMobileMenuOpen(true)}
-        />
-
-        <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto animate-fade-in">
-          <Outlet />
-        </main>
-      </div>
-
-      {/* Mobile Bottom Navigation */}
-      <BottomNav
-        onOpenAddModal={handleOpenAddModal}
-        onToggleMobileMenu={() => setIsMobileMenuOpen(true)}
+    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-[#09090b] dark:text-[#f4f4f5] relative overflow-x-hidden flex flex-col selection:bg-zinc-900 selection:text-white dark:selection:bg-white dark:selection:text-black transition-colors duration-150">
+      {/* Top subtle spotlight beam for dark mode */}
+      <div 
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] max-w-[100vw] h-[450px] pointer-events-none opacity-0 dark:opacity-100 transition-opacity duration-300"
+        style={{
+          background: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 45%, transparent 75%)',
+        }}
+      />
+      {/* Soft warm/clean gradient for light mode */}
+      <div 
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] max-w-[100vw] h-[350px] pointer-events-none dark:opacity-0 transition-opacity duration-300"
+        style={{
+          background: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(16, 185, 129, 0.05) 0%, rgba(0, 0, 0, 0.02) 50%, transparent 80%)',
+        }}
       />
 
-      {/* Mobile Slide-Over Drawer */}
-      <MobileDrawer
-        isOpen={isMobileMenuOpen}
-        onClose={() => setIsMobileMenuOpen(false)}
-        onOpenAddModal={handleOpenAddModal}
-      />
+      {/* Floating Capsule Navbar */}
+      <Navbar onOpenAddModal={handleOpenAddModal} />
+
+      {/* Main Page Content */}
+      <main className="flex-1 p-3.5 sm:p-6 md:p-8 max-w-5xl w-full mx-auto relative z-10 pb-28 md:pb-12 animate-fade-in">
+        <Outlet />
+      </main>
+
+      {/* Mobile Floating Bottom Navigation */}
+      <BottomNav onOpenAddModal={handleOpenAddModal} />
 
       {/* Global Quick Add Transaction Modal */}
       <TransactionFormModal

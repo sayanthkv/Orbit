@@ -34,6 +34,14 @@ const userSchema = new mongoose.Schema(
       enum: ['light', 'dark', 'system'],
       default: 'system',
     },
+    initialBalance: {
+      type: Number,
+      default: 0,
+    },
+    hasSetInitialBalance: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

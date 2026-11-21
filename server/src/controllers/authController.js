@@ -56,6 +56,8 @@ const register = async (req, res, next) => {
           email: user.email,
           currency: user.currency,
           themePreference: user.themePreference,
+          initialBalance: user.initialBalance || 0,
+          hasSetInitialBalance: !!user.hasSetInitialBalance,
           createdAt: user.createdAt,
         },
         token, // Also return token for clients that prefer Bearer auth
@@ -102,6 +104,8 @@ const login = async (req, res, next) => {
           email: user.email,
           currency: user.currency,
           themePreference: user.themePreference,
+          initialBalance: user.initialBalance || 0,
+          hasSetInitialBalance: !!user.hasSetInitialBalance,
           createdAt: user.createdAt,
         },
         token,
@@ -146,22 +150,31 @@ const getMe = async (req, res) => {
         email: req.user.email,
         currency: req.user.currency,
         themePreference: req.user.themePreference,
+        initialBalance: req.user.initialBalance || 0,
+        hasSetInitialBalance: !!req.user.hasSetInitialBalance,
         createdAt: req.user.createdAt,
       },
     },
   });
 };
 
-// @desc    Update preferences (currency, theme, name)
+// @desc    Update preferences (currency, theme, name, initialBalance)
 // @route   PATCH /api/auth/preferences
 // @access  Private
 const updatePreferences = async (req, res, next) => {
   try {
-    const { currency, themePreference, name } = req.body;
+    const { currency, themePreference, name, initialBalance, hasSetInitialBalance } = req.body;
     const updates = {};
     if (currency) updates.currency = currency;
     if (themePreference) updates.themePreference = themePreference;
     if (name) updates.name = name;
+    if (initialBalance !== undefined) {
+      updates.initialBalance = Number(initialBalance);
+      updates.hasSetInitialBalance = true;
+    }
+    if (hasSetInitialBalance !== undefined) {
+      updates.hasSetInitialBalance = hasSetInitialBalance;
+    }
 
     const updatedUser = await User.findByIdAndUpdate(req.user._id, updates, {
       new: true,
@@ -178,6 +191,8 @@ const updatePreferences = async (req, res, next) => {
           email: updatedUser.email,
           currency: updatedUser.currency,
           themePreference: updatedUser.themePreference,
+          initialBalance: updatedUser.initialBalance || 0,
+          hasSetInitialBalance: !!updatedUser.hasSetInitialBalance,
           createdAt: updatedUser.createdAt,
         },
       },

@@ -107,10 +107,10 @@ export const CategoriesPage = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Category Management
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Categories
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-zinc-500 mt-0.5">
             Browse default spending categories and create custom categories
           </p>
         </div>
@@ -121,19 +121,19 @@ export const CategoriesPage = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-xl w-fit">
+      <div className="flex p-1.5 bg-zinc-100 border border-zinc-200/80 rounded-full w-fit gap-1 dark:bg-[#18181A] dark:border-white/12 transition-colors">
         {[
-          { key: 'all', label: 'All Categories' },
+          { key: 'all', label: 'All' },
           { key: 'expense', label: 'Expenses' },
           { key: 'income', label: 'Income' },
         ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
               activeTab === tab.key
-                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                ? 'bg-white text-zinc-900 shadow-xs dark:bg-white dark:text-zinc-950 dark:shadow-sm'
+                : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-500 dark:hover:text-zinc-200'
             }`}
           >
             {tab.label}
@@ -149,10 +149,10 @@ export const CategoriesPage = () => {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* Custom Categories Section */}
+          {/* Custom Categories */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
                 Custom Categories ({customCategories.length})
               </h2>
             </div>
@@ -170,23 +170,23 @@ export const CategoriesPage = () => {
                 {customCategories.map((cat) => (
                   <div
                     key={cat._id}
-                    className="flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
+                    className="flex items-center justify-between p-4 rounded-2xl bg-white border border-zinc-200/80 shadow-xs hover:border-zinc-300 dark:bg-[#111113] dark:border-white/8 dark:hover:border-white/16 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs"
                         style={{
-                          backgroundColor: `${cat.color}20`,
+                          backgroundColor: `${cat.color}18`,
                           color: cat.color,
                         }}
                       >
                         {getCategoryIcon(cat.icon, 'w-5 h-5')}
                       </div>
                       <div>
-                        <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                        <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                           {cat.name}
                         </h4>
-                        <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                        <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">
                           {cat.type}
                         </span>
                       </div>
@@ -195,14 +195,14 @@ export const CategoriesPage = () => {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleOpenEdit(cat)}
-                        className="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        className="p-1.5 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-600 dark:hover:text-white dark:hover:bg-white/8 rounded-lg transition-colors cursor-pointer"
                         title="Edit category"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => setDeletingCategory(cat)}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:text-zinc-600 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
                         title="Delete category"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -214,14 +214,14 @@ export const CategoriesPage = () => {
             )}
           </section>
 
-          {/* System Default Categories Section */}
+          {/* System Default Categories */}
           <section className="space-y-3">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                System Default Categories ({defaultCategories.length})
+              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+                Default Categories ({defaultCategories.length})
               </h2>
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-emerald-500" /> Default
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 dark:bg-white/6 dark:text-zinc-500 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-zinc-400" /> Default
               </span>
             </div>
 
@@ -229,11 +229,11 @@ export const CategoriesPage = () => {
               {defaultCategories.map((cat) => (
                 <div
                   key={cat._id}
-                  className="flex items-center justify-between p-4 rounded-2xl bg-white/70 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80"
+                  className="flex items-center justify-between p-4 rounded-2xl bg-zinc-50 border border-zinc-200/60 dark:bg-white/[0.025] dark:border-white/6 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs"
                       style={{
                         backgroundColor: `${cat.color}15`,
                         color: cat.color,
@@ -242,15 +242,15 @@ export const CategoriesPage = () => {
                       {getCategoryIcon(cat.icon, 'w-5 h-5')}
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                      <h4 className="text-sm font-semibold text-zinc-800 dark:text-zinc-300">
                         {cat.name}
                       </h4>
-                      <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                      <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-600">
                         {cat.type}
                       </span>
                     </div>
                   </div>
-                  <span className="text-[11px] text-slate-400 font-medium">Standard</span>
+                  <span className="text-[11px] text-zinc-400 dark:text-zinc-600 font-medium">Standard</span>
                 </div>
               ))}
             </div>

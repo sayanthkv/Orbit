@@ -13,20 +13,22 @@ export const Button = ({
   onClick,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none select-none';
+  const base =
+    'inline-flex items-center justify-center font-bold rounded-full transition-all duration-200 focus:outline-none active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none select-none cursor-pointer';
 
   const variants = {
-    primary: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/30 focus:ring-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-600',
-    secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-800 focus:ring-slate-400 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100',
-    outline: 'border border-slate-300 dark:border-slate-700 bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-200 focus:ring-slate-400',
-    danger: 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm shadow-rose-600/20 focus:ring-rose-500 dark:bg-rose-500 dark:hover:bg-rose-600',
-    ghost: 'bg-transparent hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-600 dark:text-slate-300 focus:ring-slate-400',
+    primary: 'bg-zinc-900 hover:bg-black text-white shadow-sm dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-950 dark:shadow-[0_4px_16px_rgba(255,255,255,0.12)]',
+    secondary: 'bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border border-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 dark:border-white/10',
+    outline: 'border border-zinc-300 hover:bg-zinc-100 text-zinc-700 dark:border-white/15 dark:hover:bg-white/[0.06] dark:text-zinc-300 dark:hover:text-white',
+    danger: 'bg-rose-600 hover:bg-rose-500 text-white shadow-sm shadow-rose-500/20',
+    ghost: 'bg-transparent hover:bg-zinc-100 text-zinc-600 dark:hover:bg-white/[0.06] dark:text-zinc-400 dark:hover:text-white',
+    success: 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm shadow-emerald-500/20',
   };
 
   const sizes = {
-    sm: 'text-xs px-3 py-1.5 gap-1.5',
-    md: 'text-sm px-4 py-2.5 gap-2',
-    lg: 'text-base px-5 py-3 gap-2.5',
+    sm: 'text-xs px-4 py-1.5 gap-1.5',
+    md: 'text-sm px-5 py-2.5 gap-2',
+    lg: 'text-sm px-6 py-3 gap-2',
   };
 
   return (
@@ -34,7 +36,7 @@ export const Button = ({
       type={type}
       disabled={disabled || isLoading}
       onClick={onClick}
-      className={`${baseStyles} ${variants[variant] || variants.primary} ${sizes[size] || sizes.md} ${className}`}
+      className={`${base} ${variants[variant] || variants.primary} ${sizes[size] || sizes.md} ${className}`}
       {...props}
     >
       {isLoading ? (

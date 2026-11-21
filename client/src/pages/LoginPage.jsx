@@ -13,19 +13,13 @@ export const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
   const from = location.state?.from?.pathname || '/';
 
   const validate = () => {
     const errs = {};
-    if (!formData.email) {
-      errs.email = 'Email address is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errs.email = 'Please enter a valid email address';
-    }
-    if (!formData.password) {
-      errs.password = 'Password is required';
-    }
+    if (!formData.email) errs.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) errs.email = 'Enter a valid email';
+    if (!formData.password) errs.password = 'Password is required';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -33,38 +27,54 @@ export const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-
     setIsLoading(true);
     const result = await login(formData);
     setIsLoading(false);
-
-    if (result.success) {
-      navigate(from, { replace: true });
-    }
+    if (result.success) navigate(from, { replace: true });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-slate-950">
-      {/* Dynamic ambient background glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      style={{ background: '#09090b' }}
+    >
+      {/* Radial spotlight at top */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16,185,129,0.12) 0%, transparent 65%)',
+        }}
+      />
+      {/* Faint grid */}
+      <div className="absolute inset-0 opacity-[0.025] pointer-events-none"
+        style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)',
+          backgroundSize: '60px 60px',
+        }}
+      />
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
-          <div className="flex flex-col items-center text-center">
-            <Logo size="lg" showTagline={true} className="mb-4" />
-            <h1 className="text-2xl font-bold tracking-tight text-white">
-              Welcome back
-            </h1>
-            <p className="text-xs text-slate-400 mt-1.5">
-              Sign in to manage and track your finances in real time
-            </p>
+      <div className="w-full max-w-sm relative z-10">
+        {/* Card */}
+        <div
+          className="rounded-3xl p-7 sm:p-8 space-y-6"
+          style={{
+            background: 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05)',
+            backdropFilter: 'blur(20px)',
+          }}
+        >
+          <div className="flex flex-col items-center text-center space-y-3">
+            <Logo size="lg" showTagline={false} />
+            <div>
+              <h1 className="text-2xl font-black tracking-tight text-white">Welcome back</h1>
+              <p className="text-xs text-zinc-500 mt-1.5">Sign in to manage your finances</p>
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <Input
-              label="Email Address"
+              label="Email"
               type="email"
+              autoComplete="email"
               placeholder="you@domain.com"
               icon={Mail}
               required
@@ -72,10 +82,10 @@ export const LoginPage = () => {
               error={errors.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             />
-
             <Input
               label="Password"
               type="password"
+              autoComplete="current-password"
               placeholder="••••••••"
               icon={Lock}
               required
@@ -84,30 +94,37 @@ export const LoginPage = () => {
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             />
 
-            <Button
+            <button
               type="submit"
-              size="lg"
-              className="w-full mt-3 shadow-lg shadow-emerald-600/25"
-              isLoading={isLoading}
-              icon={ArrowRight}
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-full text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer mt-1"
+              style={{
+                background: 'linear-gradient(135deg, #10b981, #059669)',
+                boxShadow: '0 8px 24px rgba(16,185,129,0.35)',
+                color: '#fff',
+              }}
             >
-              Sign In
-            </Button>
+              {isLoading ? (
+                <span className="animate-pulse">Signing in...</span>
+              ) : (
+                <>Sign In <ArrowRight className="w-4 h-4" /></>
+              )}
+            </button>
           </form>
 
-          <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500 pt-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Secure 256-bit encrypted authentication</span>
+          <div className="flex items-center justify-center gap-2 text-[11px] text-zinc-700">
+            <ShieldCheck className="w-3.5 h-3.5 text-zinc-600" />
+            <span>Secure 256-bit encrypted login</span>
           </div>
 
-          <div className="text-center pt-3 border-t border-slate-800/80">
-            <p className="text-xs text-slate-400">
+          <div
+            className="text-center pt-4"
+            style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
+          >
+            <p className="text-xs text-zinc-600">
               New to Orbit?{' '}
-              <Link
-                to="/register"
-                className="font-semibold text-emerald-400 hover:text-emerald-300 hover:underline transition-colors"
-              >
-                Create your account
+              <Link to="/register" className="font-bold text-zinc-200 hover:text-white transition-colors underline underline-offset-4">
+                Create account
               </Link>
             </p>
           </div>

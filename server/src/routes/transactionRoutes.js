@@ -9,6 +9,7 @@ const {
 } = require('../controllers/transactionController');
 const { protect } = require('../middleware/auth');
 const validate = require('../middleware/validate');
+const { validateObjectId } = require('../middleware/security');
 const {
   createTransactionSchema,
   updateTransactionSchema,
@@ -16,6 +17,7 @@ const {
 } = require('../validations/transactionValidation');
 
 router.use(protect);
+router.use('/:id', validateObjectId('id'));
 
 router.get('/', validate(listTransactionsQuerySchema), getTransactions);
 router.post('/', validate(createTransactionSchema), createTransaction);

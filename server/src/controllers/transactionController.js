@@ -1,5 +1,7 @@
 const Transaction = require('../models/Transaction');
 const Category = require('../models/Category');
+const Account = require('../models/Account');
+const { ensureDefaultAccount } = require('./accountController');
 
 // @desc    Get paginated transactions with multi-criteria filtering and search
 // @route   GET /api/transactions
@@ -11,6 +13,7 @@ const getTransactions = async (req, res, next) => {
       limit = 10,
       type,
       categoryId,
+      accountId,
       paymentMethod,
       startDate,
       endDate,
@@ -29,6 +32,10 @@ const getTransactions = async (req, res, next) => {
 
     if (categoryId) {
       query.category = categoryId;
+    }
+
+    if (accountId) {
+      query.account = accountId;
     }
 
     if (paymentMethod) {
@@ -75,6 +82,7 @@ const getTransactions = async (req, res, next) => {
     const [transactions, total, summary] = await Promise.all([
       Transaction.find(query)
         .populate('category', 'name icon color type isDefault')
+        .populate('account', 'name type color icon isDefault')
         .sort(sort)
         .skip(skip)
         .limit(limitNum),
@@ -131,7 +139,9 @@ const getTransactionById = async (req, res, next) => {
     const transaction = await Transaction.findOne({
       _id: req.params.id,
       user: req.user._id,
-    }).populate('category', 'name icon color type isDefault');
+    })
+      .populate('category', 'name icon color type isDefault')
+      .populate('account', 'name type color icon isDefault');
 
     if (!transaction) {
       return res.status(404).json({
@@ -155,7 +165,7 @@ const getTransactionById = async (req, res, next) => {
 // @access  Private
 const createTransaction = async (req, res, next) => {
   try {
-    const { type, amount, category: categoryId, date, note, paymentMethod } = req.body;
+    const { type, amount, category: categoryId, account: accountId, date, note, paymentMethod } = req.body;
 
     // Verify category exists and is accessible to user
     const category = await Category.findOne({
@@ -170,8 +180,29 @@ const createTransaction = async (req, res, next) => {
       });
     }
 
+    // Resolve Account
+    let accountDoc;
+    if (accountId) {
+      accountDoc = await Account.findOne({ _id: accountId, user: req.user._id });
+      if (!accountDoc) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or inaccessible account specified.',
+        });
+      }
+    } else {
+      accountDoc = await Account.findOne({ user: req.user._id, isDefault: true });
+      if (!accountDoc) {
+        accountDoc = await Account.findOne({ user: req.user._id });
+      }
+      if (!accountDoc) {
+        accountDoc = await ensureDefaultAccount(req.user._id, req.user.initialBalance || 0);
+      }
+    }
+
     const transaction = await Transaction.create({
       user: req.user._id,
+      account: accountDoc ? accountDoc._id : undefined,
       type,
       amount,
       category: category._id,
@@ -180,10 +211,9 @@ const createTransaction = async (req, res, next) => {
       paymentMethod: paymentMethod || 'UPI',
     });
 
-    const populated = await Transaction.findById(transaction._id).populate(
-      'category',
-      'name icon color type isDefault'
-    );
+    const populated = await Transaction.findById(transaction._id)
+      .populate('category', 'name icon color type isDefault')
+      .populate('account', 'name type color icon isDefault');
 
     res.status(201).json({
       success: true,
@@ -212,7 +242,7 @@ const updateTransaction = async (req, res, next) => {
       });
     }
 
-    const { type, amount, category: categoryId, date, note, paymentMethod } = req.body;
+    const { type, amount, category: categoryId, account: accountId, date, note, paymentMethod } = req.body;
 
     if (categoryId) {
       const category = await Category.findOne({
@@ -229,6 +259,21 @@ const updateTransaction = async (req, res, next) => {
       transaction.category = category._id;
     }
 
+    if (accountId) {
+      const accountDoc = await Account.findOne({
+        _id: accountId,
+        user: req.user._id,
+      });
+
+      if (!accountDoc) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or inaccessible account specified.',
+        });
+      }
+      transaction.account = accountDoc._id;
+    }
+
     if (type) transaction.type = type;
     if (amount !== undefined) transaction.amount = amount;
     if (date) transaction.date = new Date(date);
@@ -237,10 +282,9 @@ const updateTransaction = async (req, res, next) => {
 
     await transaction.save();
 
-    const populated = await Transaction.findById(transaction._id).populate(
-      'category',
-      'name icon color type isDefault'
-    );
+    const populated = await Transaction.findById(transaction._id)
+      .populate('category', 'name icon color type isDefault')
+      .populate('account', 'name type color icon isDefault');
 
     res.status(200).json({
       success: true,

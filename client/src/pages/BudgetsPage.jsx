@@ -11,7 +11,7 @@ import ConfirmDialog from '../components/common/ConfirmDialog';
 import Button from '../components/common/Button';
 import EmptyState from '../components/common/EmptyState';
 import { CardSkeleton } from '../components/common/Skeleton';
-import { Plus, Target, AlertTriangle, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Plus, Target, AlertTriangle } from 'lucide-react';
 
 export const BudgetsPage = () => {
   const { user } = useAuth();
@@ -107,10 +107,10 @@ export const BudgetsPage = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
             Monthly Budgets
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-zinc-500 mt-0.5">
             Set and track spending limits with 80% & 100% threshold warnings
           </p>
         </div>
@@ -130,15 +130,15 @@ export const BudgetsPage = () => {
         </div>
       </div>
 
-      {/* Warning Alert Banner (if any budget hit 80% or exceeded) */}
+      {/* Warning Alert Banner */}
       {(overview.exceededCount > 0 || overview.warningsCount > 0) && (
-        <div className="p-4 rounded-3xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 flex items-start gap-3">
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/90 text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/25 dark:text-amber-300 flex items-start gap-3 transition-colors">
           <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <div className="text-xs space-y-1">
-            <h4 className="font-bold text-amber-900 dark:text-amber-200">
+            <h4 className="font-bold">
               Budget Alert for Selected Month
             </h4>
-            <p className="text-amber-800 dark:text-amber-300">
+            <p className="text-amber-800 dark:text-amber-400/80">
               {overview.exceededCount > 0 && (
                 <span className="font-semibold text-rose-600 dark:text-rose-400 mr-2">
                   • {overview.exceededCount} category budget(s) have been exceeded!
@@ -155,31 +155,30 @@ export const BudgetsPage = () => {
       )}
 
       {/* Total Budget Progress Card */}
-      <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+      <div className="p-5 sm:p-6 rounded-2xl bg-white border border-zinc-200/90 shadow-sm dark:bg-[#111113] dark:border-white/8 space-y-4 transition-colors">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Total Monthly Budget Limit
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+              Total Monthly Budget
             </span>
-            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">
+            <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 mt-1">
               {formatCurrency(overview.totalSpent, user?.currency)}{' '}
-              <span className="text-base font-medium text-slate-400">
+              <span className="text-base font-medium text-zinc-400 dark:text-zinc-500">
                 / {formatCurrency(overview.totalLimit, user?.currency)}
               </span>
             </h3>
           </div>
 
           <div className="text-right">
-            <span className="text-xs text-slate-400">Remaining</span>
+            <span className="text-xs text-zinc-500">Remaining</span>
             <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
               {formatCurrency(overview.totalRemaining, user?.currency)}
             </p>
           </div>
         </div>
 
-        {/* Global Progress Bar */}
         <div className="space-y-1.5">
-          <div className="w-full h-3.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden p-0.5">
+          <div className="w-full h-2 rounded-full bg-zinc-100 dark:bg-white/8 overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
                 overview.overallPercentage >= 100
@@ -191,7 +190,7 @@ export const BudgetsPage = () => {
               style={{ width: `${Math.min(overview.overallPercentage, 100)}%` }}
             />
           </div>
-          <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="flex items-center justify-between text-xs text-zinc-500">
             <span>{overview.overallPercentage}% of overall budget utilized</span>
             <span>{budgets.length} Category Target(s)</span>
           </div>

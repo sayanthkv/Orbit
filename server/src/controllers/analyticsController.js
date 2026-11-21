@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Transaction = require('../models/Transaction');
 const Category = require('../models/Category');
+const Account = require('../models/Account');
 
 // Helper to get start and end Date for a given month and year
 const getMonthDateRange = (month, year) => {
@@ -31,6 +32,10 @@ const getMonthlySummary = async (req, res, next) => {
     const now = new Date();
     const month = parseInt(req.query.month, 10) || now.getMonth() + 1;
     const year = parseInt(req.query.year, 10) || now.getFullYear();
+    const accountId = req.query.accountId;
+    const accountFilter = accountId && accountId !== 'all' && mongoose.Types.ObjectId.isValid(accountId)
+      ? { account: new mongoose.Types.ObjectId(accountId) }
+      : {};
 
     const { startDate, endDate } = getMonthDateRange(month, year);
     const { startDate: priorStart, endDate: priorEnd } = getPriorMonthDateRange(month, year);
@@ -40,6 +45,7 @@ const getMonthlySummary = async (req, res, next) => {
       {
         $match: {
           user: req.user._id,
+          ...accountFilter,
           date: { $gte: startDate, $lte: endDate },
         },
       },
@@ -57,6 +63,7 @@ const getMonthlySummary = async (req, res, next) => {
       {
         $match: {
           user: req.user._id,
+          ...accountFilter,
           date: { $gte: priorStart, $lte: priorEnd },
         },
       },
@@ -94,14 +101,58 @@ const getMonthlySummary = async (req, res, next) => {
     const expenseChangeMoM =
       priorExpense > 0 ? Math.round(((totalExpense - priorExpense) / priorExpense) * 100) : 0;
 
+    // All-time totals & balance
+    const allTimeTotals = await Transaction.aggregate([
+      { $match: { user: req.user._id, ...accountFilter } },
+      {
+        $group: {
+          _id: '$type',
+          total: { $sum: '$amount' },
+        },
+      },
+    ]);
+    let allTimeIncome = 0;
+    let allTimeExpense = 0;
+    allTimeTotals.forEach((t) => {
+      if (t._id === 'income') allTimeIncome = t.total;
+      if (t._id === 'expense') allTimeExpense = t.total;
+    });
+
+    let initialBalance = 0;
+    let activeAccount = null;
+    if (accountId && accountId !== 'all' && mongoose.Types.ObjectId.isValid(accountId)) {
+      activeAccount = await Account.findOne({ _id: accountId, user: req.user._id });
+      initialBalance = activeAccount ? (activeAccount.initialBalance || 0) : 0;
+    } else {
+      const accounts = await Account.find({ user: req.user._id });
+      initialBalance = accounts.reduce((acc, a) => acc + (a.initialBalance || 0), 0);
+      if (accounts.length === 0) {
+        initialBalance = req.user.initialBalance || 0;
+      }
+    }
+
+    const allTimeBalance = initialBalance + allTimeIncome - allTimeExpense;
+
     res.status(200).json({
       success: true,
       data: {
         month,
         year,
+        accountId: accountId || 'all',
+        account: activeAccount ? {
+          id: activeAccount._id,
+          name: activeAccount.name,
+          type: activeAccount.type,
+          color: activeAccount.color,
+          icon: activeAccount.icon,
+        } : null,
+        initialBalance,
         totalIncome,
         totalExpense,
         netBalance,
+        allTimeBalance,
+        allTimeIncome,
+        allTimeExpense,
         savingsRate,
         priorIncome,
         priorExpense,
@@ -123,6 +174,10 @@ const getCategoryBreakdown = async (req, res, next) => {
     const month = parseInt(req.query.month, 10) || now.getMonth() + 1;
     const year = parseInt(req.query.year, 10) || now.getFullYear();
     const type = req.query.type || 'expense';
+    const accountId = req.query.accountId;
+    const accountFilter = accountId && accountId !== 'all' && mongoose.Types.ObjectId.isValid(accountId)
+      ? { account: new mongoose.Types.ObjectId(accountId) }
+      : {};
 
     const { startDate, endDate } = getMonthDateRange(month, year);
 
@@ -130,6 +185,7 @@ const getCategoryBreakdown = async (req, res, next) => {
       {
         $match: {
           user: req.user._id,
+          ...accountFilter,
           type,
           date: { $gte: startDate, $lte: endDate },
         },
@@ -191,6 +247,10 @@ const getTrends = async (req, res, next) => {
     const now = new Date();
     const month = parseInt(req.query.month, 10) || now.getMonth() + 1;
     const year = parseInt(req.query.year, 10) || now.getFullYear();
+    const accountId = req.query.accountId;
+    const accountFilter = accountId && accountId !== 'all' && mongoose.Types.ObjectId.isValid(accountId)
+      ? { account: new mongoose.Types.ObjectId(accountId) }
+      : {};
 
     const { startDate, endDate } = getMonthDateRange(month, year);
 
@@ -199,6 +259,7 @@ const getTrends = async (req, res, next) => {
       {
         $match: {
           user: req.user._id,
+          ...accountFilter,
           type: 'expense',
           date: { $gte: startDate, $lte: endDate },
         },
@@ -237,6 +298,7 @@ const getTrends = async (req, res, next) => {
       {
         $match: {
           user: req.user._id,
+          ...accountFilter,
           date: { $gte: sixMonthsAgo, $lte: endDate },
         },
       },
@@ -294,6 +356,10 @@ const getSmartInsights = async (req, res, next) => {
     const now = new Date();
     const month = parseInt(req.query.month, 10) || now.getMonth() + 1;
     const year = parseInt(req.query.year, 10) || now.getFullYear();
+    const accountId = req.query.accountId;
+    const accountFilter = accountId && accountId !== 'all' && mongoose.Types.ObjectId.isValid(accountId)
+      ? { account: new mongoose.Types.ObjectId(accountId) }
+      : {};
 
     const { startDate, endDate } = getMonthDateRange(month, year);
     const { startDate: priorStart, endDate: priorEnd } = getPriorMonthDateRange(month, year);
@@ -304,6 +370,7 @@ const getSmartInsights = async (req, res, next) => {
         {
           $match: {
             user: req.user._id,
+            ...accountFilter,
             type: 'expense',
             date: { $gte: startDate, $lte: endDate },
           },
@@ -335,6 +402,7 @@ const getSmartInsights = async (req, res, next) => {
         {
           $match: {
             user: req.user._id,
+            ...accountFilter,
             type: 'expense',
             date: { $gte: priorStart, $lte: priorEnd },
           },
@@ -365,6 +433,7 @@ const getSmartInsights = async (req, res, next) => {
         {
           $match: {
             user: req.user._id,
+            ...accountFilter,
             date: { $gte: startDate, $lte: endDate },
           },
         },

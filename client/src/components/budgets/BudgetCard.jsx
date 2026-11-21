@@ -8,43 +8,40 @@ export const BudgetCard = ({ budget, onDelete }) => {
   const { user } = useAuth();
   const category = budget.category || {};
   const percentage = Math.min(budget.percentage || 0, 100);
+  const catColor = category.color || '#10B981';
 
-  // Determine state: Exceeded, Warning (80%+), or Healthy
-  let statusColor = 'bg-emerald-500';
-  let badgeColor = 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
+  let barColor = '#10b981';
+  let badgeStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
   let badgeText = 'On Track';
   let BadgeIcon = CheckCircle;
 
   if (budget.isExceeded) {
-    statusColor = 'bg-rose-500';
-    badgeColor = 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800';
-    badgeText = 'Budget Exceeded!';
+    barColor = '#f43f5e';
+    badgeStyle = 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20';
+    badgeText = 'Exceeded!';
     BadgeIcon = AlertCircle;
   } else if (budget.isWarning) {
-    statusColor = 'bg-amber-500';
-    badgeColor = 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800';
-    badgeText = '80% Limit Reached';
+    barColor = '#f59e0b';
+    badgeStyle = 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20';
+    badgeText = '80% Reached';
     BadgeIcon = AlertTriangle;
   }
 
   return (
-    <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 hover:shadow-md transition-shadow">
+    <div className="p-5 rounded-2xl bg-white border border-zinc-200/80 shadow-xs hover:border-zinc-300 dark:bg-[#111113] dark:border-white/8 dark:hover:border-white/16 transition-all duration-200 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div
-            className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm"
-            style={{
-              backgroundColor: `${category.color || '#10B981'}20`,
-              color: category.color || '#10B981',
-            }}
+            className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-xs"
+            style={{ backgroundColor: `${catColor}18`, boxShadow: `0 0 0 1px ${catColor}30` }}
           >
-            {getCategoryIcon(category.icon, 'w-5 h-5')}
+            <span style={{ color: catColor }}>
+              {getCategoryIcon(category.icon, 'w-5 h-5')}
+            </span>
           </div>
           <div>
-            <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-              {category.name || 'Category'}
-            </h4>
-            <span className="text-xs text-slate-400">
+            <h4 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{category.name || 'Category'}</h4>
+            <span className="text-xs text-zinc-500">
               Limit: {formatCurrency(budget.monthlyLimit, user?.currency)}
             </span>
           </div>
@@ -52,15 +49,15 @@ export const BudgetCard = ({ budget, onDelete }) => {
 
         <div className="flex items-center gap-2">
           <span
-            className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full border ${badgeColor}`}
+            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${badgeStyle}`}
           >
-            <BadgeIcon className="w-3.5 h-3.5" />
+            <BadgeIcon className="w-3 h-3" />
             {badgeText}
           </span>
           {onDelete && (
             <button
               onClick={() => onDelete(budget)}
-              className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:text-zinc-600 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 rounded-lg transition-all cursor-pointer"
               title="Remove budget"
             >
               <Trash2 className="w-4 h-4" />
@@ -69,31 +66,39 @@ export const BudgetCard = ({ budget, onDelete }) => {
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="space-y-1.5">
+      {/* Progress */}
+      <div className="space-y-2">
         <div className="flex items-center justify-between text-xs">
-          <span className="font-semibold text-slate-700 dark:text-slate-300">
-            Spent: {formatCurrency(budget.spent, user?.currency)}
+          <span className="font-semibold text-zinc-600 dark:text-zinc-400">
+            {formatCurrency(budget.spent, user?.currency)} spent
           </span>
-          <span className="font-bold text-slate-500 dark:text-slate-400">
+          <span
+            className="font-black text-sm tabular-nums"
+            style={{ color: barColor }}
+          >
             {budget.percentage}%
           </span>
         </div>
 
-        <div className="w-full h-3 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden p-0.5">
+        {/* Track bar */}
+        <div className="w-full h-2 rounded-full overflow-hidden bg-zinc-100 dark:bg-white/8">
           <div
-            className={`h-full rounded-full transition-all duration-500 ${statusColor}`}
-            style={{ width: `${percentage}%` }}
+            className="h-full rounded-full transition-all duration-700"
+            style={{
+              width: `${percentage}%`,
+              background: `linear-gradient(90deg, ${barColor}cc, ${barColor})`,
+              boxShadow: `0 0 8px ${barColor}60`,
+            }}
           />
         </div>
 
-        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
+        <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-600">
           <span>
             {budget.remaining > 0
-              ? `${formatCurrency(budget.remaining, user?.currency)} remaining`
-              : '₹0 remaining'}
+              ? `${formatCurrency(budget.remaining, user?.currency)} left`
+              : 'No budget left'}
           </span>
-          <span>Target: {formatCurrency(budget.monthlyLimit, user?.currency)}</span>
+          <span>of {formatCurrency(budget.monthlyLimit, user?.currency)}</span>
         </div>
       </div>
     </div>

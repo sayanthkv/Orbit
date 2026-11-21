@@ -32,30 +32,30 @@ export const ToastProvider = ({ children }) => {
     <ToastContext.Provider value={toast}>
       {children}
       {/* Toast Container */}
-      <div className="fixed bottom-20 md:bottom-6 right-4 left-4 md:left-auto md:w-96 z-50 flex flex-col gap-2 pointer-events-none">
+      <div className="fixed bottom-24 md:bottom-6 right-4 left-4 md:left-auto md:w-96 z-50 flex flex-col gap-2 pointer-events-none">
         {toasts.map((item) => (
           <div
             key={item.id}
-            className={`pointer-events-auto flex items-center justify-between p-4 rounded-xl shadow-lg border backdrop-blur-md transition-all duration-300 animate-slide-in ${
+            className={`pointer-events-auto flex items-center justify-between p-4 rounded-2xl shadow-xl border backdrop-blur-xl transition-all duration-300 animate-slide-in ${
               item.type === 'success'
-                ? 'bg-emerald-50/95 border-emerald-200 text-emerald-900 dark:bg-emerald-950/90 dark:border-emerald-800 dark:text-emerald-100'
+                ? 'bg-emerald-50/95 border-emerald-200 text-emerald-900 dark:bg-[#111113]/95 dark:border-emerald-500/30 dark:text-emerald-300'
                 : item.type === 'error'
-                ? 'bg-rose-50/95 border-rose-200 text-rose-900 dark:bg-rose-950/90 dark:border-rose-800 dark:text-rose-100'
+                ? 'bg-rose-50/95 border-rose-200 text-rose-900 dark:bg-[#111113]/95 dark:border-rose-500/30 dark:text-rose-300'
                 : item.type === 'warning'
-                ? 'bg-amber-50/95 border-amber-200 text-amber-900 dark:bg-amber-950/90 dark:border-amber-800 dark:text-amber-100'
-                : 'bg-slate-50/95 border-slate-200 text-slate-900 dark:bg-slate-900/90 dark:border-slate-800 dark:text-slate-100'
+                ? 'bg-amber-50/95 border-amber-200 text-amber-900 dark:bg-[#111113]/95 dark:border-amber-500/30 dark:text-amber-300'
+                : 'bg-white/95 border-zinc-200 text-zinc-900 dark:bg-[#111113]/95 dark:border-white/12 dark:text-zinc-200'
             }`}
           >
             <div className="flex items-center gap-3">
-              {item.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />}
-              {item.type === 'error' && <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />}
-              {item.type === 'warning' && <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />}
-              {item.type === 'info' && <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />}
+              {item.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />}
+              {item.type === 'error' && <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />}
+              {item.type === 'warning' && <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />}
+              {item.type === 'info' && <Info className="w-4 h-4 text-blue-600 dark:text-zinc-400 shrink-0" />}
               <p className="text-sm font-medium">{item.message}</p>
             </div>
             <button
               onClick={() => removeToast(item.id)}
-              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors rounded-lg"
+              className="p-1 text-zinc-400 hover:text-zinc-700 dark:text-zinc-600 dark:hover:text-white transition-colors rounded-lg cursor-pointer ml-2"
               aria-label="Dismiss toast"
             >
               <X className="w-4 h-4" />
@@ -74,3 +74,5 @@ export const useToast = () => {
   }
   return context;
 };
+
+export default ToastProvider;

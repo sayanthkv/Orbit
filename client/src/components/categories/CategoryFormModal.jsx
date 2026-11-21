@@ -71,30 +71,30 @@ export const CategoryFormModal = ({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Type Toggle */}
-        <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+        <div className="flex p-1.5 bg-zinc-100 border border-zinc-200/80 rounded-full gap-1 dark:bg-[#1c1c20] dark:border-white/8 transition-colors">
           <button
             type="button"
             onClick={() => setFormData({ ...formData, type: 'expense' })}
-            className={`flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-semibold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
               formData.type === 'expense'
                 ? 'bg-rose-500 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-500 dark:hover:text-zinc-200'
             }`}
           >
             <ArrowDownCircle className="w-4 h-4" />
-            Expense Category
+            Expense
           </button>
           <button
             type="button"
             onClick={() => setFormData({ ...formData, type: 'income' })}
-            className={`flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-semibold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
               formData.type === 'income'
                 ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-500 dark:hover:text-zinc-200'
             }`}
           >
             <ArrowUpCircle className="w-4 h-4" />
-            Income Category
+            Income
           </button>
         </div>
 
@@ -109,7 +109,7 @@ export const CategoryFormModal = ({
 
         {/* Color Palette Picker */}
         <div>
-          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-2">
+          <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider block mb-2">
             Accent Color
           </label>
           <div className="flex flex-wrap gap-2">
@@ -118,8 +118,8 @@ export const CategoryFormModal = ({
                 type="button"
                 key={c}
                 onClick={() => setFormData({ ...formData, color: c })}
-                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-transform hover:scale-110 ${
-                  formData.color === c ? 'ring-2 ring-offset-2 ring-emerald-500 scale-105' : ''
+                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-transform hover:scale-110 cursor-pointer ${
+                  formData.color === c ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-[#131315] ring-zinc-900 dark:ring-white scale-105' : ''
                 }`}
                 style={{ backgroundColor: c }}
               >
@@ -131,19 +131,19 @@ export const CategoryFormModal = ({
 
         {/* Icon Grid Picker */}
         <div>
-          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-2">
+          <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider block mb-2">
             Select Icon
           </label>
-          <div className="grid grid-cols-6 gap-2 max-h-36 overflow-y-auto p-1 border border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-850">
+          <div className="grid grid-cols-6 gap-2 max-h-36 overflow-y-auto p-1 border border-zinc-200 bg-zinc-50 rounded-xl dark:border-white/8 dark:bg-[#1c1c20]">
             {AVAILABLE_ICONS.map((iconName) => (
               <button
                 type="button"
                 key={iconName}
                 onClick={() => setFormData({ ...formData, icon: iconName })}
-                className={`p-2 rounded-xl flex items-center justify-center transition-colors ${
+                className={`p-2 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
                   formData.icon === iconName
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                    ? 'bg-zinc-900 text-white shadow-xs dark:bg-white dark:text-zinc-950 dark:shadow-sm'
+                    : 'text-zinc-600 hover:bg-zinc-200/60 dark:text-zinc-500 dark:hover:bg-white/8 dark:hover:text-zinc-200'
                 }`}
                 title={iconName}
               >
@@ -154,9 +154,9 @@ export const CategoryFormModal = ({
         </div>
 
         {/* Live Preview */}
-        <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center gap-3">
+        <div className="p-3 rounded-2xl bg-zinc-50 border border-zinc-200/80 dark:bg-white/[0.03] dark:border-white/8 flex items-center gap-3">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            className="w-10 h-10 rounded-xl flex items-center justify-center shadow-xs"
             style={{
               backgroundColor: `${formData.color}20`,
               color: formData.color,
@@ -165,8 +165,8 @@ export const CategoryFormModal = ({
             {getCategoryIcon(formData.icon, 'w-5 h-5')}
           </div>
           <div>
-            <span className="text-xs text-slate-400">Preview:</span>
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+            <span className="text-xs text-zinc-500">Preview:</span>
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-200">
               {formData.name || 'Category Name'}
             </p>
           </div>

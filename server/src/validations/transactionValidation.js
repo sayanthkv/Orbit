@@ -12,6 +12,7 @@ const createTransactionSchema = z.object({
     date: z.string().or(z.date()).optional(),
     note: z.string().max(250, 'Note cannot exceed 250 characters').optional().default(''),
     paymentMethod: z.enum(['cash', 'UPI', 'card', 'bank']).optional().default('UPI'),
+    account: z.union([z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid account ID'), emptyToUndefined]).optional(),
   }),
 });
 
@@ -26,6 +27,7 @@ const updateTransactionSchema = z.object({
     date: z.string().or(z.date()).optional(),
     note: z.string().max(250).optional(),
     paymentMethod: z.enum(['cash', 'UPI', 'card', 'bank']).optional(),
+    account: z.union([z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid account ID'), emptyToUndefined]).optional(),
   }),
 });
 
@@ -35,6 +37,7 @@ const listTransactionsQuerySchema = z.object({
     limit: z.coerce.number().int().min(1).max(100).optional().default(10),
     type: z.union([z.enum(['expense', 'income']), emptyToUndefined]).optional(),
     categoryId: z.union([z.string().regex(/^[0-9a-fA-F]{24}$/), emptyToUndefined]).optional(),
+    accountId: z.union([z.string().regex(/^[0-9a-fA-F]{24}$/), emptyToUndefined]).optional(),
     paymentMethod: z.union([z.enum(['cash', 'UPI', 'card', 'bank']), emptyToUndefined]).optional(),
     startDate: z.union([z.string(), emptyToUndefined]).optional(),
     endDate: z.union([z.string(), emptyToUndefined]).optional(),
