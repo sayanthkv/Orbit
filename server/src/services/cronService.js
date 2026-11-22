@@ -7,7 +7,9 @@ const Transaction = require('../models/Transaction');
  */
 const calculateNextRunDate = (currentDate, frequency) => {
   const next = new Date(currentDate);
-  if (frequency === 'weekly') {
+  if (frequency === 'daily') {
+    next.setDate(next.getDate() + 1);
+  } else if (frequency === 'weekly') {
     next.setDate(next.getDate() + 7);
   } else if (frequency === 'monthly') {
     next.setMonth(next.getMonth() + 1);
@@ -18,51 +20,88 @@ const calculateNextRunDate = (currentDate, frequency) => {
 };
 
 /**
- * Processes all active recurring transactions that are currently due
+ * Processes all active recurring transactions that are currently due.
+ * Supports optional userId parameter to run catch-up on login or page load.
  */
-const processDueRecurringTransactions = async () => {
+const processDueRecurringTransactions = async (userId = null) => {
   const now = new Date();
-  console.log(`⏰ [cronService] Checking for due recurring transactions at ${now.toISOString()}...`);
+  const query = {
+    isActive: true,
+    nextRunDate: { $lte: now },
+  };
+
+  if (userId) {
+    query.user = userId;
+  }
 
   try {
-    const dueRules = await Recurring.find({
-      isActive: true,
-      nextRunDate: { $lte: now },
-    });
+    const dueRules = await Recurring.find(query);
 
     if (dueRules.length === 0) {
-      console.log('⏰ [cronService] No recurring transactions due at this time.');
       return { processedCount: 0, createdTransactions: [] };
     }
-
-    console.log(`⏰ [cronService] Found ${dueRules.length} due recurring transaction(s). Processing...`);
 
     const createdTransactions = [];
 
     for (const rule of dueRules) {
-      // 1. Create the new transaction
-      const newTx = await Transaction.create({
-        user: rule.user,
-        type: rule.type,
-        amount: rule.amount,
-        category: rule.category,
-        date: now,
-        note: rule.note ? `[Auto-Recurring] ${rule.note}` : `[Auto-Recurring] ${rule.frequency}`,
-        paymentMethod: rule.paymentMethod,
-      });
+      // Catch up on any runs that were scheduled in the past while server was down
+      // Limit catch-up loop to prevent runaway cycles (max 365 iterations per rule)
+      let iterations = 0;
+      const maxIterations = 365;
 
-      createdTransactions.push(newTx);
+      while (rule.nextRunDate <= now && iterations < maxIterations) {
+        iterations++;
 
-      // 2. Advance the next run date
-      const nextDate = calculateNextRunDate(rule.nextRunDate, rule.frequency);
-      rule.nextRunDate = nextDate;
-      rule.lastProcessed = now;
+        // If an endDate is specified and we have passed it, deactivate rule and break
+        if (rule.endDate && rule.nextRunDate > rule.endDate) {
+          rule.isActive = false;
+          break;
+        }
+
+        const scheduledDate = new Date(rule.nextRunDate);
+        const dayStart = new Date(scheduledDate);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(scheduledDate);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        // Idempotency: verify this recurring transaction wasn't already generated for this date
+        const existingTx = await Transaction.findOne({
+          user: rule.user,
+          recurringRule: rule._id,
+          date: { $gte: dayStart, $lte: dayEnd },
+        });
+
+        if (!existingTx) {
+          const newTx = await Transaction.create({
+            user: rule.user,
+            type: rule.type,
+            amount: rule.amount,
+            category: rule.category || undefined,
+            account: rule.account || undefined,
+            toAccount: rule.toAccount || undefined,
+            date: scheduledDate,
+            note: rule.note ? `[Auto-Recurring] ${rule.note}` : `[Auto-Recurring] ${rule.frequency}`,
+            paymentMethod: rule.paymentMethod || 'bank',
+            recurringRule: rule._id,
+          });
+          createdTransactions.push(newTx);
+        }
+
+        // Advance to next run date
+        const nextDate = calculateNextRunDate(rule.nextRunDate, rule.frequency);
+        rule.nextRunDate = nextDate;
+        rule.lastProcessed = now;
+
+        // If the new nextDate exceeds endDate, deactivate rule
+        if (rule.endDate && nextDate > rule.endDate) {
+          rule.isActive = false;
+          break;
+        }
+      }
+
       await rule.save();
-
-      console.log(`   ✅ Created transaction ${newTx._id} (₹${newTx.amount}) for user ${rule.user}. Next run: ${nextDate.toISOString()}`);
     }
 
-    console.log(`🎉 [cronService] Successfully processed ${createdTransactions.length} recurring transaction(s).`);
     return { processedCount: createdTransactions.length, createdTransactions };
   } catch (error) {
     console.error('❌ [cronService] Error processing recurring transactions:', error.message);
@@ -74,22 +113,23 @@ const processDueRecurringTransactions = async () => {
  * Initializes the node-cron scheduler
  */
 const initCron = () => {
-  // Run every hour at minute 0: '0 * * * *'
-  // In development, also schedule every 30 minutes
+  // Run hourly check
   const scheduleExpr = '0 * * * *';
 
   cron.schedule(scheduleExpr, async () => {
-    await processDueRecurringTransactions();
+    try {
+      await processDueRecurringTransactions();
+    } catch (err) {
+      console.warn('Cron execution warning:', err.message);
+    }
   });
 
-  console.log(`🚀 [cronService] node-cron scheduler initialized with expression: "${scheduleExpr}"`);
-
-  // Run once shortly after server startup to catch up on any missed transactions
+  // Run once on server startup after a small delay to allow DB connection to settle
   setTimeout(() => {
     processDueRecurringTransactions().catch((e) =>
-      console.warn('Startup recurring check warning:', e.message)
+      console.warn('Startup recurring catch-up check warning:', e.message)
     );
-  }, 3000);
+  }, 4000);
 };
 
 module.exports = {

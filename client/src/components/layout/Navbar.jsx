@@ -10,6 +10,7 @@ export const NAV_ITEMS = [
   { to: '/accounts', label: 'Accounts' },
   { to: '/transactions', label: 'Expenses' },
   { to: '/budgets', label: 'Budgets' },
+  { to: '/subscriptions', label: 'Recurring' },
   { to: '/categories', label: 'Categories' },
   { to: '/settings', label: 'Settings' },
 ];

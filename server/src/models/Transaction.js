@@ -54,6 +54,11 @@ const transactionSchema = new mongoose.Schema(
       ref: 'Account',
       index: true,
     },
+    recurringRule: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Recurring',
+      index: true,
+    },
   },
   {
     timestamps: true,

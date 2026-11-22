@@ -14,6 +14,7 @@ import AccountsPage from './pages/AccountsPage';
 import CombinedAccountsPage from './pages/CombinedAccountsPage';
 import TransactionsPage from './pages/TransactionsPage';
 import BudgetsPage from './pages/BudgetsPage';
+import SubscriptionsPage from './pages/SubscriptionsPage';
 import CategoriesPage from './pages/CategoriesPage';
 import SettingsPage from './pages/SettingsPage';
 
@@ -42,6 +43,7 @@ export function App() {
                   <Route path="/accounts/combined" element={<CombinedAccountsPage />} />
                   <Route path="/transactions" element={<TransactionsPage />} />
                   <Route path="/budgets" element={<BudgetsPage />} />
+                  <Route path="/subscriptions" element={<SubscriptionsPage />} />
                   <Route path="/categories" element={<CategoriesPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                 </Route>

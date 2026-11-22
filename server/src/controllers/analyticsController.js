@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Transaction = require('../models/Transaction');
 const Category = require('../models/Category');
 const Account = require('../models/Account');
+const { processDueRecurringTransactions } = require('../services/cronService');
 
 // Helper to get start and end Date for a given month and year
 const getMonthDateRange = (month, year) => {
@@ -29,6 +30,9 @@ const getPriorMonthDateRange = (month, year) => {
 // @access  Private
 const getMonthlySummary = async (req, res, next) => {
   try {
+    // Run catch-up for any due recurring transactions (handles Render wake up)
+    await processDueRecurringTransactions(req.user._id).catch(() => {});
+
     const now = new Date();
     const month = parseInt(req.query.month, 10) || now.getMonth() + 1;
     const year = parseInt(req.query.year, 10) || now.getFullYear();

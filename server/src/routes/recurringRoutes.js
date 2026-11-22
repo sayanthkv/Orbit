@@ -6,6 +6,7 @@ const {
   updateRecurringRule,
   deleteRecurringRule,
   triggerProcess,
+  runRuleNow,
 } = require('../controllers/recurringController');
 const { protect } = require('../middleware/auth');
 const validate = require('../middleware/validate');
@@ -21,5 +22,6 @@ router.post('/', validate(createRecurringSchema), createRecurringRule);
 router.put('/:id', validate(updateRecurringSchema), updateRecurringRule);
 router.delete('/:id', deleteRecurringRule);
 router.post('/process', triggerProcess);
+router.post('/:id/run', runRuleNow);
 
 module.exports = router;

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { processDueRecurringTransactions } = require('../services/cronService');
 
 const getCookieOptions = () => {
   const isProduction = process.env.NODE_ENV === 'production';
@@ -45,6 +46,9 @@ const register = async (req, res, next) => {
 
     const token = signToken(user._id);
     res.cookie('token', token, getCookieOptions());
+
+    // Trigger catch-up on due recurring transactions in background (handles Render free-tier sleep)
+    processDueRecurringTransactions(user._id).catch(() => {});
 
     res.status(201).json({
       success: true,
@@ -93,6 +97,9 @@ const login = async (req, res, next) => {
 
     const token = signToken(user._id);
     res.cookie('token', token, getCookieOptions());
+
+    // Trigger catch-up on due recurring transactions in background (handles Render free-tier sleep)
+    processDueRecurringTransactions(user._id).catch(() => {});
 
     res.status(200).json({
       success: true,

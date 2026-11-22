@@ -10,8 +10,9 @@ const recurringTransactionSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['expense', 'income'],
+      enum: ['expense', 'income', 'transfer'],
       required: [true, 'Transaction type is required'],
+      index: true,
     },
     amount: {
       type: Number,
@@ -21,7 +22,19 @@ const recurringTransactionSchema = new mongoose.Schema(
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Category',
-      required: [true, 'Category is required'],
+      required: function () {
+        return this.type !== 'transfer';
+      },
+    },
+    account: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Account',
+      index: true,
+    },
+    toAccount: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Account',
+      index: true,
     },
     note: {
       type: String,
@@ -36,13 +49,17 @@ const recurringTransactionSchema = new mongoose.Schema(
     },
     frequency: {
       type: String,
-      enum: ['weekly', 'monthly', 'yearly'],
+      enum: ['daily', 'weekly', 'monthly', 'yearly'],
       required: [true, 'Frequency is required'],
     },
     startDate: {
       type: Date,
       default: Date.now,
       required: true,
+    },
+    endDate: {
+      type: Date,
+      default: null,
     },
     nextRunDate: {
       type: Date,
@@ -70,7 +87,7 @@ const recurringTransactionSchema = new mongoose.Schema(
   }
 );
 
-recurringTransactionSchema.index({ isActive: 1, nextRunDate: 1 });
+recurringTransactionSchema.index({ user: 1, isActive: 1, nextRunDate: 1 });
 
 const Recurring = mongoose.model('Recurring', recurringTransactionSchema);
 
