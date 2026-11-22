@@ -8,6 +8,8 @@ import { formatCurrency } from '../utils/formatters';
 import TransactionItem from '../components/transactions/TransactionItem';
 import TransactionFilters from '../components/transactions/TransactionFilters';
 import TransactionFormModal from '../components/transactions/TransactionFormModal';
+import ExportCSVModal from '../components/transactions/ExportCSVModal';
+import ImportCSVModal from '../components/transactions/ImportCSVModal';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import Button from '../components/common/Button';
 import EmptyState from '../components/common/EmptyState';
@@ -18,11 +20,12 @@ import {
   ChevronRight,
   Receipt,
   Download,
+  Upload,
 } from 'lucide-react';
 
 export const TransactionsPage = () => {
   const { user } = useAuth();
-  const { selectedAccountId, fetchAccounts } = useAccounts();
+  const { accounts, selectedAccountId, fetchAccounts } = useAccounts();
   const toast = useToast();
 
   const [transactions, setTransactions] = useState([]);
@@ -64,6 +67,8 @@ export const TransactionsPage = () => {
   }, [selectedAccountId]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [deletingTransaction, setDeletingTransaction] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -236,17 +241,26 @@ export const TransactionsPage = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="outline"
-            size="md"
-            onClick={handleExportCSV}
-            icon={Download}
-            disabled={transactions.length === 0}
+            size="sm"
+            onClick={() => setIsImportModalOpen(true)}
+            icon={Upload}
+            className="text-xs font-bold"
           >
-            Export
+            Import CSV
           </Button>
-          <Button onClick={handleOpenCreate} icon={Plus} size="md">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsExportModalOpen(true)}
+            icon={Download}
+            className="text-xs font-bold"
+          >
+            Export CSV
+          </Button>
+          <Button onClick={handleOpenCreate} icon={Plus} size="sm" className="text-xs font-bold">
             Add Expense
           </Button>
         </div>
@@ -358,6 +372,25 @@ export const TransactionsPage = () => {
           </div>
         </div>
       )}
+
+      {/* Export CSV Modal */}
+      <ExportCSVModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        accounts={accounts}
+        categories={categories}
+      />
+
+      {/* Import CSV Modal */}
+      <ImportCSVModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => {
+          fetchTransactions();
+          fetchAccounts();
+        }}
+        accounts={accounts}
+      />
 
       {/* Modal */}
       <TransactionFormModal
