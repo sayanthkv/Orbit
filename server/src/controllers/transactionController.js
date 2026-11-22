@@ -4,6 +4,17 @@ const Category = require('../models/Category');
 const Account = require('../models/Account');
 const { ensureDefaultAccount } = require('./accountController');
 
+const normalizeTags = (tagsInput) => {
+  if (!tagsInput) return [];
+  if (Array.isArray(tagsInput)) {
+    return tagsInput.map((t) => String(t).trim().toLowerCase()).filter(Boolean);
+  }
+  if (typeof tagsInput === 'string') {
+    return tagsInput.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
+  }
+  return [];
+};
+
 // @desc    Get paginated transactions with multi-criteria filtering and search
 // @route   GET /api/transactions
 // @access  Private
@@ -20,6 +31,7 @@ const getTransactions = async (req, res, next) => {
       endDate,
       minAmount,
       maxAmount,
+      tag,
       search,
       sortBy = 'date',
       sortOrder = 'desc',
@@ -41,6 +53,10 @@ const getTransactions = async (req, res, next) => {
 
     if (paymentMethod) {
       query.paymentMethod = paymentMethod;
+    }
+
+    if (tag && tag.trim()) {
+      query.tags = tag.trim().toLowerCase();
     }
 
     // Date range filter
@@ -66,9 +82,19 @@ const getTransactions = async (req, res, next) => {
       if (maxAmount !== undefined) query.amount.$lte = Number(maxAmount);
     }
 
-    // Keyword search on note
+    // Keyword search on note or tags
     if (search && search.trim()) {
-      query.note = { $regex: search.trim(), $options: 'i' };
+      const term = search.trim();
+      const searchCondition = [
+        { note: { $regex: term, $options: 'i' } },
+        { tags: { $in: [new RegExp(term, 'i')] } },
+      ];
+      if (query.$or) {
+        query.$and = [{ $or: query.$or }, { $or: searchCondition }];
+        delete query.$or;
+      } else {
+        query.$or = searchCondition;
+      }
     }
 
     const pageNum = parseInt(page, 10);
@@ -177,6 +203,7 @@ const createTransaction = async (req, res, next) => {
       date,
       note,
       paymentMethod,
+      tags,
     } = req.body;
 
     // Handle Transfer Type
@@ -239,6 +266,7 @@ const createTransaction = async (req, res, next) => {
               date: date ? new Date(date) : new Date(),
               note: note ? note.trim() : `Transfer to ${toAccountDoc.bankName || toAccountDoc.name}`,
               paymentMethod: paymentMethod || 'bank',
+              tags: normalizeTags(tags),
             },
           ],
           { session }
@@ -258,6 +286,7 @@ const createTransaction = async (req, res, next) => {
           date: date ? new Date(date) : new Date(),
           note: note ? note.trim() : `Transfer to ${toAccountDoc.bankName || toAccountDoc.name}`,
           paymentMethod: paymentMethod || 'bank',
+          tags: normalizeTags(tags),
         });
       } finally {
         session.endSession();
@@ -317,6 +346,7 @@ const createTransaction = async (req, res, next) => {
       date: date ? new Date(date) : new Date(),
       note: note ? note.trim() : '',
       paymentMethod: paymentMethod || 'UPI',
+      tags: normalizeTags(tags),
     });
 
     const populated = await Transaction.findById(transaction._id)
@@ -350,7 +380,7 @@ const updateTransaction = async (req, res, next) => {
       });
     }
 
-    const { type, amount, category: categoryId, account: accountId, toAccount: toAccountId, date, note, paymentMethod } = req.body;
+    const { type, amount, category: categoryId, account: accountId, toAccount: toAccountId, date, note, paymentMethod, tags } = req.body;
 
     if (categoryId) {
       const category = await Category.findOne({
@@ -406,6 +436,7 @@ const updateTransaction = async (req, res, next) => {
     if (date) transaction.date = new Date(date);
     if (note !== undefined) transaction.note = note.trim();
     if (paymentMethod) transaction.paymentMethod = paymentMethod;
+    if (tags !== undefined) transaction.tags = normalizeTags(tags);
 
     await transaction.save();
 

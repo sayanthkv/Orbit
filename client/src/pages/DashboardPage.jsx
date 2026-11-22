@@ -9,6 +9,9 @@ import { useToast } from '../context/ToastContext';
 import MonthSelector from '../components/dashboard/MonthSelector';
 import HeroBalanceCard from '../components/dashboard/HeroBalanceCard';
 import SafeToSpendCard from '../components/dashboard/SafeToSpendCard';
+import SmartInsightsCard from '../components/dashboard/SmartInsightsCard';
+import SavingsGoalsWidget from '../components/dashboard/SavingsGoalsWidget';
+import QuickAddBar from '../components/dashboard/QuickAddBar';
 import BalanceModal from '../components/dashboard/BalanceModal';
 import CategoryDonutChart from '../components/dashboard/CategoryDonutChart';
 import SpendingTrendChart from '../components/dashboard/SpendingTrendChart';
@@ -231,6 +234,16 @@ export const DashboardPage = () => {
         </div>
       </div>
 
+      {/* Natural Language Quick Add Bar */}
+      <QuickAddBar
+        categories={categories}
+        accounts={accounts}
+        onTransactionLogged={() => {
+          loadDashboardData();
+          fetchAccounts();
+        }}
+      />
+
       {/* Dedicated Account Switcher on Home Page */}
       {accounts.length > 0 && (
         <div className="flex items-center justify-between gap-2.5 bg-white border border-zinc-200/90 dark:bg-[#141418] dark:border-white/10 rounded-2xl p-2 sm:p-2.5 shadow-xs transition-all">
@@ -291,6 +304,12 @@ export const DashboardPage = () => {
             budgetAlerts={summary.budgetAlerts}
             currency={user?.currency}
           />
+          <SmartInsightsCard
+            month={selectedMonth}
+            year={selectedYear}
+            accountId={activeDashboardAccountId}
+          />
+          <SavingsGoalsWidget />
         </>
       )}
 

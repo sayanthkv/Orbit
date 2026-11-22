@@ -28,6 +28,7 @@ export const TransactionFormModal = ({
     date: new Date().toISOString().split('T')[0],
     note: '',
     paymentMethod: 'UPI',
+    tags: '',
   });
   const [errors, setErrors] = useState({});
 
@@ -54,6 +55,7 @@ export const TransactionFormModal = ({
           : new Date().toISOString().split('T')[0],
         note: initialData.note || '',
         paymentMethod: initialData.paymentMethod || (initialData.type === 'transfer' ? 'bank' : 'UPI'),
+        tags: Array.isArray(initialData.tags) ? initialData.tags.join(', ') : initialData.tags || '',
       });
     } else {
       const defaultCat = categories.find((c) => c.type === defaultType);
@@ -66,6 +68,7 @@ export const TransactionFormModal = ({
         date: new Date().toISOString().split('T')[0],
         note: '',
         paymentMethod: defaultType === 'transfer' ? 'bank' : 'UPI',
+        tags: '',
       });
     }
     setErrors({});
@@ -124,6 +127,9 @@ export const TransactionFormModal = ({
     const payload = {
       ...formData,
       amount: Number(formData.amount),
+      tags: formData.tags
+        ? formData.tags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean)
+        : [],
     };
     if (formData.type === 'transfer') {
       delete payload.category; // Backend handles transfer category resolution automatically
@@ -335,6 +341,15 @@ export const TransactionFormModal = ({
           }
           value={formData.note}
           onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+        />
+
+        {/* Tags */}
+        <Input
+          label="Tags (Optional)"
+          type="text"
+          placeholder="e.g. vacation, weekend, tax-deductible (comma-separated)"
+          value={formData.tags}
+          onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
         />
 
         {/* Action Buttons */}

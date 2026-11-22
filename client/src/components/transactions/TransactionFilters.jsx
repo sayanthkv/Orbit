@@ -18,7 +18,10 @@ export const TransactionFilters = ({
       filters.accountId ||
       filters.paymentMethod ||
       filters.startDate ||
-      filters.endDate
+      filters.endDate ||
+      filters.minAmount ||
+      filters.maxAmount ||
+      filters.tag
   );
 
   const selectClass =
@@ -156,6 +159,46 @@ export const TransactionFilters = ({
               title="To date"
             />
           </div>
+        </div>
+      </div>
+
+      {/* Advanced Filters: Amount Range & Tag Search */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+        {/* Min & Max Amount */}
+        <div className="lg:col-span-2">
+          <label className="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
+            Amount Range
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="number"
+              placeholder="Min amount (0.00)"
+              value={filters.minAmount || ''}
+              onChange={(e) => onChange('minAmount', e.target.value)}
+              className={selectClass}
+            />
+            <input
+              type="number"
+              placeholder="Max amount (e.g. 5000)"
+              value={filters.maxAmount || ''}
+              onChange={(e) => onChange('maxAmount', e.target.value)}
+              className={selectClass}
+            />
+          </div>
+        </div>
+
+        {/* Tag Filter */}
+        <div>
+          <label className="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
+            Tag Filter
+          </label>
+          <input
+            type="text"
+            placeholder="e.g. vacation, bills"
+            value={filters.tag || ''}
+            onChange={(e) => onChange('tag', e.target.value)}
+            className={selectClass}
+          />
         </div>
       </div>
 

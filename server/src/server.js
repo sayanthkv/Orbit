@@ -23,6 +23,7 @@ const budgetRoutes = require('./routes/budgetRoutes');
 const goalRoutes = require('./routes/goalRoutes');
 const exportRoutes = require('./routes/exportRoutes');
 const accountRoutes = require('./routes/accountRoutes');
+const recurringRoutes = require('./routes/recurringRoutes');
 
 const app = express();
 
@@ -76,6 +77,34 @@ const authLimiter = rateLimit({
 });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/login/2fa', authLimiter);
+app.use('/api/auth/2fa/verify', authLimiter);
+
+// Per-route Rate Limiter for Refresh Token Rotation
+const refreshLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many token refresh attempts. Please try again later.',
+  },
+});
+app.use('/api/auth/refresh', refreshLimiter);
+
+// Per-route Rate Limiter for CSV Import
+const importLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20, // 20 batch imports per 15 min
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many import requests. Please try again after a few minutes.',
+  },
+});
+app.use('/api/export/import', importLimiter);
 
 // API Health Check
 app.get('/api/health', (req, res) => {
@@ -90,6 +119,50 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Swagger/OpenAPI Documentation Routes (Phase 8)
+const openApiSpec = require('./docs/openapi.json');
+app.get('/api/docs/openapi.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(openApiSpec);
+});
+
+app.get('/api/docs', (req, res) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Orbit API Reference</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
+  <style>
+    body { margin: 0; background-color: #0b0c0e; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .topbar { display: none; }
+    .swagger-ui { filter: invert(88%) hue-rotate(180deg); }
+    .swagger-ui .info { margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
+  <script>
+    window.onload = () => {
+      window.ui = SwaggerUIBundle({
+        url: '/api/docs/openapi.json',
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIBundle.SwaggerUIStandalonePreset
+        ],
+        layout: "BaseLayout"
+      });
+    };
+  </script>
+</body>
+</html>`);
+});
+
 // Mount Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -98,6 +171,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/goals', goalRoutes);
+app.use('/api/recurring', recurringRoutes);
 app.use('/api/export', exportRoutes);
 
 // Catch-all 404 handler for undefined API routes

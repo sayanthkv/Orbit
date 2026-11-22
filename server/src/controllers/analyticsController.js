@@ -440,11 +440,25 @@ const getTrends = async (req, res, next) => {
 
     const sixMonthsTrend = Object.values(monthlyDataMap);
 
+    // Calculate Net Worth trajectory across the historical 6-month timeline
+    const allAccounts = await Account.find({ user: req.user._id });
+    const totalStartingBalance = allAccounts.reduce((acc, a) => acc + (a.initialBalance || 0), 0);
+    let runningNetWorth = totalStartingBalance;
+
+    const netWorthTrend = sixMonthsTrend.map((m) => {
+      runningNetWorth += (m.income - m.expense);
+      return {
+        ...m,
+        netWorth: runningNetWorth,
+      };
+    });
+
     res.status(200).json({
       success: true,
       data: {
         dailyTrend,
         sixMonthsTrend,
+        netWorthTrend,
       },
     });
   } catch (error) {
@@ -603,7 +617,48 @@ const getSmartInsights = async (req, res, next) => {
       });
     }
 
-    // 3. Savings Rate insight
+    // 3. Weekend vs Weekday spending insight
+    const weekendTxs = await Transaction.aggregate([
+      {
+        $match: {
+          user: req.user._id,
+          ...accountFilter,
+          type: 'expense',
+          date: { $gte: startDate, $lte: endDate },
+        },
+      },
+      {
+        $project: {
+          amount: 1,
+          dayOfWeek: { $dayOfWeek: '$date' }, // 1 is Sunday, 7 is Saturday
+        },
+      },
+      {
+        $group: {
+          _id: { $in: ['$dayOfWeek', [1, 7]] }, // true = weekend
+          total: { $sum: '$amount' },
+        },
+      },
+    ]);
+
+    let weekendSpent = 0;
+    weekendTxs.forEach((w) => {
+      if (w._id === true) weekendSpent = w.total;
+    });
+
+    if (totalExpense > 0) {
+      const weekendPct = Math.round((weekendSpent / totalExpense) * 100);
+      if (weekendPct >= 40) {
+        insights.push({
+          type: 'info',
+          title: 'High Weekend Outflow',
+          message: `Weekend spending accounts for ${weekendPct}% of your total expenses this month.`,
+          icon: 'Calendar',
+        });
+      }
+    }
+
+    // 4. Savings Rate insight
     if (totalIncome > 0) {
       const rate = Math.round(((totalIncome - totalExpense) / totalIncome) * 100);
       if (rate >= 30) {

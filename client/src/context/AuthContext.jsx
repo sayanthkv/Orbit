@@ -44,6 +44,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginAsDemo = async () => {
+    try {
+      setLoading(true);
+      const res = await authApi.demoLogin();
+      if (res.success && res.data?.user) {
+        setUser(res.data.user);
+        toast.success('Welcome to Orbit Demo Mode! Explore preloaded data.');
+        return { success: true };
+      }
+      return { success: false };
+    } catch (err) {
+      toast.error('Failed to launch demo mode.');
+      return { success: false };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const register = async (userData) => {
     try {
       const res = await authApi.register(userData);
@@ -90,6 +108,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         isAuthenticated: !!user,
         login,
+        loginAsDemo,
         register,
         logout,
         updatePreferences,

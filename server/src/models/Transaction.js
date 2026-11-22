@@ -59,6 +59,13 @@ const transactionSchema = new mongoose.Schema(
       ref: 'Recurring',
       index: true,
     },
+    tags: [
+      {
+        type: String,
+        trim: true,
+        lowercase: true,
+      },
+    ],
   },
   {
     timestamps: true,
@@ -77,6 +84,7 @@ transactionSchema.index({ user: 1, type: 1, date: -1 });
 transactionSchema.index({ user: 1, category: 1, date: -1 });
 transactionSchema.index({ user: 1, account: 1, date: -1 });
 transactionSchema.index({ user: 1, toAccount: 1, date: -1 });
+transactionSchema.index({ user: 1, tags: 1 });
 transactionSchema.index({ note: 'text' });
 
 const Transaction = mongoose.model('Transaction', transactionSchema);

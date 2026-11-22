@@ -11,6 +11,7 @@ import TransactionItem from '../components/transactions/TransactionItem';
 import TransactionFormModal from '../components/transactions/TransactionFormModal';
 import AssetAllocationPieChart from '../components/accounts/AssetAllocationPieChart';
 import CashflowTrendChart from '../components/dashboard/CashflowTrendChart';
+import NetWorthTrendChart from '../components/dashboard/NetWorthTrendChart';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import Button from '../components/common/Button';
 import EmptyState from '../components/common/EmptyState';
@@ -306,10 +307,13 @@ export const CombinedAccountsPage = () => {
         </div>
       </div>
 
-      {/* DETAILED VISUAL ANALYTICS: ASSET ALLOCATION PIE CHART & COMBINED CASHFLOW GRAPH */}
+      {/* DETAILED VISUAL ANALYTICS: NET WORTH TRAJECTORY, ASSET ALLOCATION & CASHFLOW */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+        <NetWorthTrendChart data={combinedTrends.netWorthTrend || combinedTrends.sixMonthsTrend} />
         <AssetAllocationPieChart accounts={accounts} totalNetWorth={totalNetWorth} />
-        <CashflowTrendChart data={combinedTrends.sixMonthsTrend} />
+        <div className="lg:col-span-2">
+          <CashflowTrendChart data={combinedTrends.sixMonthsTrend} />
+        </div>
       </div>
 
       {/* DEDICATED COMBINED TRANSACTION LEDGER */}

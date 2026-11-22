@@ -16,6 +16,7 @@ const createTransactionSchema = z
       paymentMethod: z.enum(['cash', 'UPI', 'card', 'bank']).optional().default('bank'),
       account: z.union([z.string().regex(objectIdRegex, 'Invalid account ID'), emptyToUndefined]).optional(),
       toAccount: z.union([z.string().regex(objectIdRegex, 'Invalid destination account ID'), emptyToUndefined]).optional(),
+      tags: z.union([z.array(z.string()), z.string()]).optional(),
     }),
   })
   .refine(
@@ -45,6 +46,7 @@ const updateTransactionSchema = z
       paymentMethod: z.enum(['cash', 'UPI', 'card', 'bank']).optional(),
       account: z.union([z.string().regex(objectIdRegex, 'Invalid account ID'), emptyToUndefined]).optional(),
       toAccount: z.union([z.string().regex(objectIdRegex, 'Invalid destination account ID'), emptyToUndefined]).optional(),
+      tags: z.union([z.array(z.string()), z.string()]).optional(),
     }),
   })
   .refine(
@@ -72,6 +74,7 @@ const listTransactionsQuerySchema = z.object({
     endDate: z.union([z.string(), emptyToUndefined]).optional(),
     minAmount: z.union([z.coerce.number(), emptyToUndefined]).optional(),
     maxAmount: z.union([z.coerce.number(), emptyToUndefined]).optional(),
+    tag: z.union([z.string(), emptyToUndefined]).optional(),
     search: z.union([z.string(), emptyToUndefined]).optional(),
     sortBy: z.enum(['date', 'amount']).optional().default('date'),
     sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),

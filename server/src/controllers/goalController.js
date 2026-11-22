@@ -12,9 +12,14 @@ const getGoals = async (req, res, next) => {
       const remaining = Math.max(0, g.targetAmount - g.currentAmount);
 
       let daysRemaining = null;
+      let suggestedMonthlyContribution = 0;
       if (g.targetDate) {
         const diffTime = new Date(g.targetDate) - new Date();
         daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (daysRemaining > 0 && remaining > 0) {
+          const monthsRemaining = Math.max(1, daysRemaining / 30.4375);
+          suggestedMonthlyContribution = Math.round((remaining / monthsRemaining) * 100) / 100;
+        }
       }
 
       return {
@@ -27,6 +32,7 @@ const getGoals = async (req, res, next) => {
         percentage,
         remaining,
         daysRemaining,
+        suggestedMonthlyContribution,
         isCompleted: g.currentAmount >= g.targetAmount,
       };
     });

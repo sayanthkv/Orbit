@@ -28,7 +28,7 @@ const accountSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['bank', 'cash', 'card', 'savings', 'wallet', 'other'],
+      enum: ['bank', 'cash', 'card', 'savings', 'wallet', 'loan', 'liability', 'other'],
       default: 'bank',
     },
     initialBalance: {

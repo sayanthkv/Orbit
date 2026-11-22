@@ -42,6 +42,33 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Refresh Token Rotation (Phase 9)
+    refreshTokens: [
+      {
+        tokenHash: { type: String, required: true },
+        family: { type: String, required: true },
+        expiresAt: { type: Date, required: true },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    // Two-Factor Authentication (Phase 9)
+    twoFactorEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    twoFactorSecret: {
+      type: String,
+      select: false,
+    },
+    twoFactorBackupCodes: {
+      type: [
+        {
+          codeHash: String,
+          used: { type: Boolean, default: false },
+        },
+      ],
+      select: false,
+    },
   },
   {
     timestamps: true,

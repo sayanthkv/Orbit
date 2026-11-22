@@ -111,6 +111,20 @@ export const TransactionItem = ({ transaction, onEdit, onDelete }) => {
             </span>
             <span className="text-zinc-300 dark:text-zinc-700">•</span>
             <span>{formatDate(transaction.date)}</span>
+
+            {/* Tags Pills */}
+            {transaction.tags && transaction.tags.length > 0 && (
+              <div className="hidden md:flex items-center gap-1 ml-1">
+                {transaction.tags.slice(0, 3).map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-white/8 px-1.5 py-0.5 rounded-md"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
