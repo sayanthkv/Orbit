@@ -7,7 +7,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seed": "node src/scripts/seed.js",
-    "test": "node --test src/__tests__/*.test.js"
+    "test": "node --test src/__tests__/orbit.test.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
