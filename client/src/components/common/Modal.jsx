@@ -35,17 +35,17 @@ export const Modal = ({
       aria-modal="true"
     >
       <div
-        className={`relative bg-white dark:bg-[#141418] border border-zinc-200/90 dark:border-white/12 rounded-[28px] w-full ${maxWidth} max-h-[88vh] flex flex-col shadow-[0_25px_80px_rgba(0,0,0,0.85)] animate-scale-up transition-all overflow-hidden`}
+        className={`relative bg-white dark:bg-[#141418] border border-zinc-200/90 dark:border-white/12 rounded-[28px] w-full ${maxWidth} max-h-[85vh] sm:max-h-[88vh] flex flex-col shadow-[0_25px_80px_rgba(0,0,0,0.85)] animate-scale-up transition-all overflow-hidden my-auto`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sticky Modal Header */}
-        <div className="flex items-start justify-between p-5 sm:p-6 pb-4 border-b border-zinc-100 dark:border-white/8 shrink-0 bg-white dark:bg-[#141418]">
+        <div className="flex items-start justify-between p-4 sm:p-6 pb-3 sm:pb-4 border-b border-zinc-100 dark:border-white/8 shrink-0 bg-white dark:bg-[#141418]">
           <div className="pr-4">
             <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white tracking-tight">
               {title}
             </h3>
             {description && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium line-clamp-2">
                 {description}
               </p>
             )}
@@ -59,8 +59,8 @@ export const Modal = ({
           </button>
         </div>
 
-        {/* Scrollable Modal Body */}
-        <div className="p-5 sm:p-6 pt-4 overflow-y-auto flex-1 min-h-0">
+        {/* Scrollable Modal Body with visible smooth scrollbar */}
+        <div className="p-4 sm:p-6 pt-3 sm:pt-4 overflow-y-auto flex-1 min-h-0 overscroll-contain">
           {children}
         </div>
       </div>

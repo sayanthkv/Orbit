@@ -10,7 +10,7 @@ const transactionSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['expense', 'income'],
+      enum: ['expense', 'income', 'transfer'],
       required: [true, 'Transaction type is required'],
       index: true,
     },
@@ -22,7 +22,9 @@ const transactionSchema = new mongoose.Schema(
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Category',
-      required: [true, 'Category is required'],
+      required: function () {
+        return this.type !== 'transfer';
+      },
       index: true,
     },
     date: {
@@ -40,9 +42,14 @@ const transactionSchema = new mongoose.Schema(
     paymentMethod: {
       type: String,
       enum: ['cash', 'UPI', 'card', 'bank'],
-      default: 'UPI',
+      default: 'bank',
     },
     account: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Account',
+      index: true,
+    },
+    toAccount: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Account',
       index: true,
@@ -64,6 +71,7 @@ transactionSchema.index({ user: 1, date: -1 });
 transactionSchema.index({ user: 1, type: 1, date: -1 });
 transactionSchema.index({ user: 1, category: 1, date: -1 });
 transactionSchema.index({ user: 1, account: 1, date: -1 });
+transactionSchema.index({ user: 1, toAccount: 1, date: -1 });
 transactionSchema.index({ note: 'text' });
 
 const Transaction = mongoose.model('Transaction', transactionSchema);

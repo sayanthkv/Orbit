@@ -51,7 +51,7 @@ const getAccounts = async (req, res, next) => {
 
     const { startDate, endDate } = getCurrentMonthRange();
 
-    // Aggregate all-time income & expense by account
+    // Aggregate all-time income & expense by account (excluding transfers from income/expense)
     const allTimeStats = await Transaction.aggregate([
       { $match: { user: userId, account: { $ne: null } } },
       {
@@ -59,6 +59,17 @@ const getAccounts = async (req, res, next) => {
           _id: { account: '$account', type: '$type' },
           total: { $sum: '$amount' },
           count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Aggregate all-time incoming transfers by destination account
+    const allTimeTransfersIn = await Transaction.aggregate([
+      { $match: { user: userId, type: 'transfer', toAccount: { $ne: null } } },
+      {
+        $group: {
+          _id: '$toAccount',
+          total: { $sum: '$amount' },
         },
       },
     ]);
@@ -85,11 +96,20 @@ const getAccounts = async (req, res, next) => {
     allTimeStats.forEach((stat) => {
       const accId = stat._id.account.toString();
       if (!allTimeMap[accId]) {
-        allTimeMap[accId] = { income: 0, expense: 0, count: 0 };
+        allTimeMap[accId] = { income: 0, expense: 0, transfersOut: 0, transfersIn: 0, count: 0 };
       }
       if (stat._id.type === 'income') allTimeMap[accId].income += stat.total;
       if (stat._id.type === 'expense') allTimeMap[accId].expense += stat.total;
+      if (stat._id.type === 'transfer') allTimeMap[accId].transfersOut += stat.total;
       allTimeMap[accId].count += stat.count;
+    });
+
+    allTimeTransfersIn.forEach((stat) => {
+      const accId = stat._id.toString();
+      if (!allTimeMap[accId]) {
+        allTimeMap[accId] = { income: 0, expense: 0, transfersOut: 0, transfersIn: 0, count: 0 };
+      }
+      allTimeMap[accId].transfersIn += stat.total;
     });
 
     const monthMap = {};
@@ -111,11 +131,11 @@ const getAccounts = async (req, res, next) => {
 
     const formattedAccounts = accounts.map((acc) => {
       const accId = acc._id.toString();
-      const stats = allTimeMap[accId] || { income: 0, expense: 0, count: 0 };
+      const stats = allTimeMap[accId] || { income: 0, expense: 0, transfersOut: 0, transfersIn: 0, count: 0 };
       const mStats = monthMap[accId] || { income: 0, expense: 0 };
 
       const initBal = Number(acc.initialBalance) || 0;
-      const currentBalance = initBal + stats.income - stats.expense;
+      const currentBalance = initBal + stats.income - stats.expense + (stats.transfersIn || 0) - (stats.transfersOut || 0);
 
       totalCombinedBalance += currentBalance;
       totalCombinedInitialBalance += initBal;
@@ -129,6 +149,8 @@ const getAccounts = async (req, res, next) => {
         currentBalance,
         allTimeIncome: stats.income,
         allTimeExpense: stats.expense,
+        allTimeTransfersIn: stats.transfersIn || 0,
+        allTimeTransfersOut: stats.transfersOut || 0,
         monthIncome: mStats.income,
         monthExpense: mStats.expense,
         monthNet: mStats.income - mStats.expense,

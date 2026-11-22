@@ -40,12 +40,13 @@ const getMonthlySummary = async (req, res, next) => {
     const { startDate, endDate } = getMonthDateRange(month, year);
     const { startDate: priorStart, endDate: priorEnd } = getPriorMonthDateRange(month, year);
 
-    // Current month totals
+    // Current month totals (strictly expense & income, excluding internal transfers)
     const currentTotals = await Transaction.aggregate([
       {
         $match: {
           user: req.user._id,
           ...accountFilter,
+          type: { $in: ['expense', 'income'] },
           date: { $gte: startDate, $lte: endDate },
         },
       },
@@ -58,12 +59,13 @@ const getMonthlySummary = async (req, res, next) => {
       },
     ]);
 
-    // Prior month totals for MoM comparisons
+    // Prior month totals for MoM comparisons (strictly expense & income)
     const priorTotals = await Transaction.aggregate([
       {
         $match: {
           user: req.user._id,
           ...accountFilter,
+          type: { $in: ['expense', 'income'] },
           date: { $gte: priorStart, $lte: priorEnd },
         },
       },
@@ -101,9 +103,9 @@ const getMonthlySummary = async (req, res, next) => {
     const expenseChangeMoM =
       priorExpense > 0 ? Math.round(((totalExpense - priorExpense) / priorExpense) * 100) : 0;
 
-    // All-time totals & balance
+    // All-time totals & balance (strictly expense & income)
     const allTimeTotals = await Transaction.aggregate([
-      { $match: { user: req.user._id, ...accountFilter } },
+      { $match: { user: req.user._id, ...accountFilter, type: { $in: ['expense', 'income'] } } },
       {
         $group: {
           _id: '$type',
@@ -120,9 +122,27 @@ const getMonthlySummary = async (req, res, next) => {
 
     let initialBalance = 0;
     let activeAccount = null;
+    let accountTransfersDelta = 0;
+
     if (accountId && accountId !== 'all' && mongoose.Types.ObjectId.isValid(accountId)) {
       activeAccount = await Account.findOne({ _id: accountId, user: req.user._id });
       initialBalance = activeAccount ? (activeAccount.initialBalance || 0) : 0;
+
+      if (activeAccount) {
+        const [transfersOutRes, transfersInRes] = await Promise.all([
+          Transaction.aggregate([
+            { $match: { user: req.user._id, account: activeAccount._id, type: 'transfer' } },
+            { $group: { _id: null, total: { $sum: '$amount' } } },
+          ]),
+          Transaction.aggregate([
+            { $match: { user: req.user._id, toAccount: activeAccount._id, type: 'transfer' } },
+            { $group: { _id: null, total: { $sum: '$amount' } } },
+          ]),
+        ]);
+        const transfersOut = transfersOutRes[0]?.total || 0;
+        const transfersIn = transfersInRes[0]?.total || 0;
+        accountTransfersDelta = transfersIn - transfersOut;
+      }
     } else {
       const accounts = await Account.find({ user: req.user._id });
       initialBalance = accounts.reduce((acc, a) => acc + (a.initialBalance || 0), 0);
@@ -131,7 +151,7 @@ const getMonthlySummary = async (req, res, next) => {
       }
     }
 
-    const allTimeBalance = initialBalance + allTimeIncome - allTimeExpense;
+    const allTimeBalance = initialBalance + allTimeIncome - allTimeExpense + accountTransfersDelta;
 
     res.status(200).json({
       success: true,

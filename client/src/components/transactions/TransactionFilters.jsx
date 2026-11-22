@@ -51,17 +51,18 @@ export const TransactionFilters = ({
         </div>
 
         {/* Type Segmented Control */}
-        <div className="flex p-1 bg-zinc-100 border border-zinc-200/80 rounded-xl shrink-0 dark:bg-[#18181e] dark:border-white/10 transition-colors">
+        <div className="flex p-1 bg-zinc-100 border border-zinc-200/80 rounded-xl shrink-0 dark:bg-[#18181e] dark:border-white/10 transition-colors overflow-x-auto">
           {[
             { value: '', label: 'All Types' },
             { value: 'expense', label: 'Expenses' },
             { value: 'income', label: 'Income' },
+            { value: 'transfer', label: 'Transfers' },
           ].map((tab) => (
             <button
               key={tab.value}
               type="button"
               onClick={() => onChange('type', tab.value)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                 filters.type === tab.value
                   ? 'bg-zinc-950 text-white shadow-xs dark:bg-white dark:text-zinc-950 dark:shadow-sm'
                   : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white'
