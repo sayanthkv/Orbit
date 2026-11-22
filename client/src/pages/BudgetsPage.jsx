@@ -11,7 +11,7 @@ import ConfirmDialog from '../components/common/ConfirmDialog';
 import Button from '../components/common/Button';
 import EmptyState from '../components/common/EmptyState';
 import { CardSkeleton } from '../components/common/Skeleton';
-import { Plus, Target, AlertTriangle } from 'lucide-react';
+import { Plus, Target, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 export const BudgetsPage = () => {
   const { user } = useAuth();
@@ -154,45 +154,74 @@ export const BudgetsPage = () => {
         </div>
       )}
 
-      {/* Total Budget Progress Card */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-white border border-zinc-200/90 shadow-sm dark:bg-[#111113] dark:border-white/8 space-y-4 transition-colors">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
-              Total Monthly Budget
-            </span>
-            <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 mt-1">
-              {formatCurrency(overview.totalSpent, user?.currency)}{' '}
-              <span className="text-base font-medium text-zinc-400 dark:text-zinc-500">
-                / {formatCurrency(overview.totalLimit, user?.currency)}
+      {/* Top Overview Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Total Budget Progress Card */}
+        <div className="md:col-span-2 p-5 sm:p-6 rounded-2xl bg-white border border-zinc-200/90 shadow-sm dark:bg-[#111113] dark:border-white/8 space-y-4 transition-colors">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+                Total Monthly Budget
               </span>
-            </h3>
+              <h3 className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100 mt-1">
+                {formatCurrency(overview.totalSpent, user?.currency)}{' '}
+                <span className="text-base font-medium text-zinc-400 dark:text-zinc-500">
+                  / {formatCurrency(overview.totalLimit, user?.currency)}
+                </span>
+              </h3>
+            </div>
+
+            <div className="text-right">
+              <span className="text-xs text-zinc-500">Remaining</span>
+              <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                {formatCurrency(overview.totalRemaining, user?.currency)}
+              </p>
+            </div>
           </div>
 
-          <div className="text-right">
-            <span className="text-xs text-zinc-500">Remaining</span>
-            <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-              {formatCurrency(overview.totalRemaining, user?.currency)}
-            </p>
+          <div className="space-y-1.5">
+            <div className="w-full h-2 rounded-full bg-zinc-100 dark:bg-white/8 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  overview.overallPercentage >= 100
+                    ? 'bg-rose-500'
+                    : overview.overallPercentage >= 80
+                    ? 'bg-amber-500'
+                    : 'bg-emerald-500'
+                }`}
+                style={{ width: `${Math.min(overview.overallPercentage, 100)}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-xs text-zinc-500">
+              <span>{overview.overallPercentage}% of overall budget utilized</span>
+              <span>{budgets.length} Category Target(s)</span>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <div className="w-full h-2 rounded-full bg-zinc-100 dark:bg-white/8 overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                overview.overallPercentage >= 100
-                  ? 'bg-rose-500'
-                  : overview.overallPercentage >= 80
-                  ? 'bg-amber-500'
-                  : 'bg-emerald-500'
-              }`}
-              style={{ width: `${Math.min(overview.overallPercentage, 100)}%` }}
-            />
+        {/* Safe to Spend Per Day Metric Card */}
+        <div className="p-5 sm:p-6 rounded-2xl bg-white border border-zinc-200/90 shadow-sm dark:bg-[#111113] dark:border-white/8 flex flex-col justify-between transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+              Safe to Spend
+            </span>
+            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
           </div>
-          <div className="flex items-center justify-between text-xs text-zinc-500">
-            <span>{overview.overallPercentage}% of overall budget utilized</span>
-            <span>{budgets.length} Category Target(s)</span>
+
+          <div className="my-2">
+            <h4 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
+              {formatCurrency(overview.safeToSpendDaily || 0, user?.currency)}
+              <span className="text-xs font-semibold text-zinc-400 ml-1">/ day</span>
+            </h4>
+            <p className="text-xs text-zinc-500 mt-1">
+              {overview.daysRemaining ? `${overview.daysRemaining} days remaining in month` : 'Current period'}
+            </p>
+          </div>
+
+          <div className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 pt-2 border-t border-zinc-100 dark:border-white/5">
+            Daily limit to stay strictly within budget
           </div>
         </div>
       </div>

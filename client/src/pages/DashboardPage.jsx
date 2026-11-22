@@ -8,6 +8,7 @@ import { useAccounts } from '../context/AccountContext';
 import { useToast } from '../context/ToastContext';
 import MonthSelector from '../components/dashboard/MonthSelector';
 import HeroBalanceCard from '../components/dashboard/HeroBalanceCard';
+import SafeToSpendCard from '../components/dashboard/SafeToSpendCard';
 import BalanceModal from '../components/dashboard/BalanceModal';
 import CategoryDonutChart from '../components/dashboard/CategoryDonutChart';
 import SpendingTrendChart from '../components/dashboard/SpendingTrendChart';
@@ -276,14 +277,21 @@ export const DashboardPage = () => {
       {loading ? (
         <CardSkeleton className="h-56 rounded-3xl" />
       ) : (
-        <HeroBalanceCard
-          summary={summary}
-          selectedAccount={activeDashboardAccount}
-          onAddExpense={handleOpenAddExpense}
-          onAddIncome={handleOpenAddIncome}
-          onEditBalance={handleInitiateEditBalance}
-          onSetInitialBalance={handleOpenSetInitialBalance}
-        />
+        <>
+          <HeroBalanceCard
+            summary={summary}
+            selectedAccount={activeDashboardAccount}
+            onAddExpense={handleOpenAddExpense}
+            onAddIncome={handleOpenAddIncome}
+            onEditBalance={handleInitiateEditBalance}
+            onSetInitialBalance={handleOpenSetInitialBalance}
+          />
+          <SafeToSpendCard
+            safeToSpend={summary.safeToSpend}
+            budgetAlerts={summary.budgetAlerts}
+            currency={user?.currency}
+          />
+        </>
       )}
 
       {/* Category Pills Quick Filter Bar */}

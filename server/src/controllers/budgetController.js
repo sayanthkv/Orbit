@@ -78,6 +78,26 @@ const getBudgets = async (req, res, next) => {
     const warningsCount = enrichedBudgets.filter((b) => b.isWarning).length;
     const exceededCount = enrichedBudgets.filter((b) => b.isExceeded).length;
 
+    const alerts = enrichedBudgets
+      .filter((b) => b.isWarning || b.isExceeded)
+      .map((b) => ({
+        id: b._id,
+        category: b.category?.name || 'Category',
+        type: b.isExceeded ? 'danger' : 'warning',
+        percentage: b.percentage,
+        spent: b.spent,
+        monthlyLimit: b.monthlyLimit,
+        message: b.isExceeded
+          ? `${b.category?.name || 'Category'} budget exceeded (${b.percentage}% spent)`
+          : `${b.category?.name || 'Category'} reached ${b.percentage}% (≥80%) of budget limit`,
+      }));
+
+    const totalDaysInMonth = new Date(year, month, 0).getDate();
+    const isCurrentMonth = month === (now.getMonth() + 1) && year === now.getFullYear();
+    const daysRemaining = isCurrentMonth ? Math.max(1, totalDaysInMonth - now.getDate() + 1) : totalDaysInMonth;
+    const remainingBudget = Math.max(0, totalBudgetLimit - totalBudgetSpent);
+    const safeToSpendDaily = daysRemaining > 0 ? Math.round((remainingBudget / daysRemaining) * 100) / 100 : 0;
+
     res.status(200).json({
       success: true,
       data: {
@@ -94,6 +114,9 @@ const getBudgets = async (req, res, next) => {
               : 0,
           warningsCount,
           exceededCount,
+          alerts,
+          safeToSpendDaily,
+          daysRemaining,
         },
       },
     });

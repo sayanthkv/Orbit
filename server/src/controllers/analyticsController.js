@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Transaction = require('../models/Transaction');
 const Category = require('../models/Category');
 const Account = require('../models/Account');
+const Budget = require('../models/Budget');
 const { processDueRecurringTransactions } = require('../services/cronService');
 
 // Helper to get start and end Date for a given month and year
@@ -157,6 +158,76 @@ const getMonthlySummary = async (req, res, next) => {
 
     const allTimeBalance = initialBalance + allTimeIncome - allTimeExpense + accountTransfersDelta;
 
+    // Safe to Spend calculation per day for the rest of the month
+    const totalDaysInMonth = new Date(year, month, 0).getDate();
+    const isCurrentMonth = month === (now.getMonth() + 1) && year === now.getFullYear();
+    const isFutureMonth = year > now.getFullYear() || (year === now.getFullYear() && month > (now.getMonth() + 1));
+
+    let daysRemaining = 0;
+    if (isCurrentMonth) {
+      daysRemaining = Math.max(1, totalDaysInMonth - now.getDate() + 1);
+    } else if (isFutureMonth) {
+      daysRemaining = totalDaysInMonth;
+    } else {
+      daysRemaining = 0;
+    }
+
+    const userBudgets = await Budget.find({ user: req.user._id, month, year }).populate(
+      'category',
+      'name icon color'
+    );
+    const totalBudgetLimit = userBudgets.reduce((acc, b) => acc + (b.monthlyLimit || 0), 0);
+
+    const poolType = totalBudgetLimit > 0 ? 'budget' : 'income';
+    const poolTotal = totalBudgetLimit > 0 ? totalBudgetLimit : totalIncome;
+    const remainingPool = Math.max(0, poolTotal - totalExpense);
+    const safeToSpendDaily = daysRemaining > 0 ? Math.round((remainingPool / daysRemaining) * 100) / 100 : 0;
+
+    // Budget warnings & exceeded alerts for this month
+    const budgetAlerts = [];
+    if (userBudgets.length > 0) {
+      const catSpend = await Transaction.aggregate([
+        {
+          $match: {
+            user: req.user._id,
+            type: 'expense',
+            date: { $gte: startDate, $lte: endDate },
+          },
+        },
+        { $group: { _id: '$category', total: { $sum: '$amount' } } },
+      ]);
+      const catSpendMap = {};
+      catSpend.forEach((cs) => {
+        catSpendMap[cs._id.toString()] = cs.total;
+      });
+
+      userBudgets.forEach((b) => {
+        const spent = catSpendMap[b.category?._id?.toString()] || 0;
+        const pct = b.monthlyLimit > 0 ? Math.round((spent / b.monthlyLimit) * 100) : 0;
+        if (pct >= 100) {
+          budgetAlerts.push({
+            id: b._id,
+            category: b.category?.name || 'Category',
+            type: 'danger',
+            percentage: pct,
+            spent,
+            limit: b.monthlyLimit,
+            message: `${b.category?.name || 'Category'} budget exceeded (${pct}% spent)`,
+          });
+        } else if (pct >= 80) {
+          budgetAlerts.push({
+            id: b._id,
+            category: b.category?.name || 'Category',
+            type: 'warning',
+            percentage: pct,
+            spent,
+            limit: b.monthlyLimit,
+            message: `${b.category?.name || 'Category'} is at ${pct}% of budget limit`,
+          });
+        }
+      });
+    }
+
     res.status(200).json({
       success: true,
       data: {
@@ -182,6 +253,15 @@ const getMonthlySummary = async (req, res, next) => {
         priorExpense,
         incomeChangeMoM,
         expenseChangeMoM,
+        safeToSpend: {
+          dailyAmount: safeToSpendDaily,
+          daysRemaining,
+          totalDays: totalDaysInMonth,
+          poolType,
+          poolTotal,
+          remainingPool,
+        },
+        budgetAlerts,
       },
     });
   } catch (error) {
