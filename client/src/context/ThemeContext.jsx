@@ -11,12 +11,21 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     const root = document.documentElement;
+    const targetColor = theme === 'dark' ? '#09090b' : '#ffffff';
     if (theme === 'dark') {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
     localStorage.setItem('orbit_theme', theme);
+
+    // Keep mobile OS status/notification bar in sync with current theme (no green tint)
+    const metaThemeColors = document.querySelectorAll('meta[name="theme-color"]');
+    metaThemeColors.forEach((meta) => {
+      if (!meta.getAttribute('media')) {
+        meta.setAttribute('content', targetColor);
+      }
+    });
   }, [theme]);
 
   const toggleTheme = () => {

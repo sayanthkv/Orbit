@@ -118,7 +118,7 @@ export const AccountFormModal = ({
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!validate()) return;
     const finalName = formData.name.trim() || formData.bankName.trim();
     onSubmit({
@@ -130,12 +130,24 @@ export const AccountFormModal = ({
     });
   };
 
+  const footerAction = (
+    <div className="flex items-center justify-end gap-2 w-full">
+      <Button type="button" variant="ghost" onClick={onClose} disabled={isLoading} className="w-1/3 sm:w-auto">
+        Cancel
+      </Button>
+      <Button type="button" onClick={handleSubmit} variant="primary" isLoading={isLoading} className="flex-1 sm:flex-initial shadow-md">
+        {initialData ? 'Save Changes' : 'Create Account'}
+      </Button>
+    </div>
+  );
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={initialData ? 'Edit Bank Account' : 'Add New Bank / Account'}
       description="Track distinct bank accounts, cards, or cash wallets"
+      footer={footerAction}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Quick Bank Presets */}
@@ -267,16 +279,6 @@ export const AccountFormModal = ({
             Set as Primary / Default Account
           </span>
         </label>
-
-        {/* Buttons */}
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-white/5">
-          <Button type="button" variant="ghost" onClick={onClose} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button type="submit" variant="primary" isLoading={isLoading}>
-            {initialData ? 'Save Changes' : 'Create Account'}
-          </Button>
-        </div>
       </form>
     </Modal>
   );

@@ -9,12 +9,29 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const toast = useToast();
 
+  const saveAccountProfile = (userData) => {
+    if (userData?.email) {
+      try {
+        localStorage.setItem(
+          'orbit_saved_account',
+          JSON.stringify({
+            name: userData.name || '',
+            email: userData.email || '',
+            currency: userData.currency || 'INR',
+            lastLogin: new Date().toISOString(),
+          })
+        );
+      } catch (e) {}
+    }
+  };
+
   const checkAuth = async () => {
     try {
       setLoading(true);
       const res = await authApi.getMe();
       if (res.success && res.data?.user) {
         setUser(res.data.user);
+        saveAccountProfile(res.data.user);
       } else {
         setUser(null);
       }
@@ -34,6 +51,7 @@ export const AuthProvider = ({ children }) => {
       const res = await authApi.login(credentials);
       if (res.success && res.data?.user) {
         setUser(res.data.user);
+        saveAccountProfile(res.data.user);
         toast.success(res.message || 'Logged in successfully!');
         return { success: true };
       }
@@ -41,6 +59,35 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       toast.error(err.message || 'Login failed. Check your credentials.');
       return { success: false, message: err.message };
+    }
+  };
+
+  const attemptOneClickLogin = async () => {
+    try {
+      setLoading(true);
+      // Attempt session restoration via token/refresh
+      let res;
+      try {
+        res = await authApi.getMe();
+      } catch {
+        // try refresh
+        const refRes = await authApi.refreshToken();
+        if (refRes.success) {
+          res = await authApi.getMe();
+        }
+      }
+
+      if (res?.success && res?.data?.user) {
+        setUser(res.data.user);
+        saveAccountProfile(res.data.user);
+        toast.success(`Welcome back, ${res.data.user.name || 'there'}!`);
+        return { success: true };
+      }
+      return { success: false, requiresPassword: true };
+    } catch {
+      return { success: false, requiresPassword: true };
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,6 +114,7 @@ export const AuthProvider = ({ children }) => {
       const res = await authApi.register(userData);
       if (res.success && res.data?.user) {
         setUser(res.data.user);
+        saveAccountProfile(res.data.user);
         toast.success(res.message || 'Account created successfully!');
         return { success: true };
       }
@@ -108,6 +156,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         isAuthenticated: !!user,
         login,
+        attemptOneClickLogin,
         loginAsDemo,
         register,
         logout,

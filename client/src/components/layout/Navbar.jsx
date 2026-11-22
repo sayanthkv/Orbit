@@ -65,16 +65,6 @@ export const Navbar = ({ onOpenAddModal }) => {
 
         {/* Right User & Controls */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Quick Add button on mobile top bar */}
-          <button
-            onClick={onOpenAddModal}
-            type="button"
-            className="md:hidden flex items-center gap-1 px-3 py-1.5 rounded-full bg-zinc-900 text-white dark:bg-[#18181B] dark:border dark:border-white/15 dark:text-white text-xs font-bold shadow-md active:scale-95 transition-all cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Add</span>
-          </button>
-
           {/* Theme toggle - visible on all screen sizes */}
           <button
             onClick={toggleTheme}

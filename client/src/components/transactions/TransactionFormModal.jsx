@@ -40,7 +40,6 @@ export const TransactionFormModal = ({
       accounts[0]?._id ||
       '';
 
-    // Pick a distinct default toAccount if available for transfer
     const otherAccount = accounts.find((a) => a._id !== preferredAccId)?._id || '';
 
     if (initialData) {
@@ -98,6 +97,7 @@ export const TransactionFormModal = ({
     if (!formData.amount || Number(formData.amount) <= 0) {
       errs.amount = 'Please enter an amount greater than 0';
     }
+
     if (!formData.account) {
       errs.account = 'Please select a source account';
     }
@@ -122,7 +122,7 @@ export const TransactionFormModal = ({
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!validate()) return;
     const payload = {
       ...formData,
@@ -132,7 +132,7 @@ export const TransactionFormModal = ({
         : [],
     };
     if (formData.type === 'transfer') {
-      delete payload.category; // Backend handles transfer category resolution automatically
+      delete payload.category;
     } else {
       delete payload.toAccount;
     }
@@ -154,14 +154,52 @@ export const TransactionFormModal = ({
     : isTransfer
     ? 'Transfer Between Accounts'
     : isExpense
-    ? 'Log Expense'
-    : 'Log Income';
+    ? 'Add Expense'
+    : 'Add Income';
 
   const modalDescription = isTransfer
-    ? 'Move money between your accounts without affecting your net worth'
+    ? 'Move money between accounts without altering net worth'
     : isExpense
-    ? 'Record an outflow transaction against your chosen account'
-    : 'Record an inflow or credit to your chosen account';
+    ? 'Log an outflow against your chosen account'
+    : 'Log an inflow or income credit to your account';
+
+  const footerAction = (
+    <div className="flex items-center justify-end gap-2.5 w-full">
+      <Button
+        variant="outline"
+        size="md"
+        type="button"
+        onClick={onClose}
+        disabled={isLoading}
+        className="w-1/3 sm:w-auto text-xs font-bold"
+      >
+        Cancel
+      </Button>
+      <Button
+        type="button"
+        onClick={handleSubmit}
+        size="md"
+        isLoading={isLoading}
+        variant={isTransfer ? 'primary' : isExpense ? 'danger' : 'primary'}
+        icon={initialData ? Check : Plus}
+        className={`flex-1 sm:flex-initial text-xs sm:text-sm font-bold shadow-md cursor-pointer ${
+          isTransfer ? '!bg-violet-600 hover:!bg-violet-700 !text-white' : ''
+        }`}
+      >
+        {initialData
+          ? isTransfer
+            ? 'Update Transfer'
+            : isExpense
+            ? 'Update Expense'
+            : 'Update Income'
+          : isTransfer
+          ? 'Transfer Funds'
+          : isExpense
+          ? 'Record Expense'
+          : 'Record Income'}
+      </Button>
+    </div>
+  );
 
   return (
     <Modal
@@ -170,6 +208,7 @@ export const TransactionFormModal = ({
       title={modalTitle}
       description={modalDescription}
       maxWidth="max-w-lg"
+      footer={footerAction}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Type Toggle Pills: 3-Way Split (Expense | Income | Transfer) */}
@@ -177,7 +216,7 @@ export const TransactionFormModal = ({
           <button
             type="button"
             onClick={() => handleTypeChange('expense')}
-            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               isExpense
                 ? 'bg-rose-600 text-white shadow-sm'
                 : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white'
@@ -189,7 +228,7 @@ export const TransactionFormModal = ({
           <button
             type="button"
             onClick={() => handleTypeChange('income')}
-            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               isIncome
                 ? 'bg-emerald-600 text-white shadow-sm'
                 : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white'
@@ -201,7 +240,7 @@ export const TransactionFormModal = ({
           <button
             type="button"
             onClick={() => handleTypeChange('transfer')}
-            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
               isTransfer
                 ? 'bg-violet-600 text-white shadow-sm'
                 : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white'
@@ -212,13 +251,18 @@ export const TransactionFormModal = ({
           </button>
         </div>
 
-        {/* Amount Input */}
-        <div>
-          <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider block mb-1">
-            Amount
-          </label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-zinc-400 dark:text-zinc-500">
+        {/* Amount Input with prominent currency badge */}
+        <div className="p-3 sm:p-4 rounded-2xl bg-zinc-50 border border-zinc-200/80 dark:bg-[#18181e] dark:border-white/8 transition-colors">
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              {isTransfer ? 'Transfer Amount' : isExpense ? 'Expense Amount' : 'Income Amount'}
+            </label>
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-zinc-200/70 text-zinc-700 dark:bg-white/10 dark:text-zinc-300">
+              {user?.currency || 'INR'}
+            </span>
+          </div>
+          <div className="relative flex items-center">
+            <span className="text-2xl sm:text-3xl font-black text-zinc-400 dark:text-zinc-500 mr-2 select-none">
               {user?.currency === 'INR' ? '₹' : '$'}
             </span>
             <input
@@ -230,13 +274,13 @@ export const TransactionFormModal = ({
               placeholder="0.00"
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              className={`w-full rounded-2xl border bg-white border-zinc-200 text-zinc-900 pl-11 pr-4 py-3 sm:py-3.5 text-2xl sm:text-3xl font-black tracking-tight outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-400/15 dark:bg-[#1c1c20] dark:text-zinc-100 dark:border-white/10 dark:focus:border-white/30 dark:focus:ring-white/10 transition-all ${
-                errors.amount ? 'border-rose-400 dark:border-rose-500/50' : ''
+              className={`w-full bg-transparent text-zinc-900 text-3xl sm:text-4xl font-black tracking-tight outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-700 dark:text-white ${
+                errors.amount ? 'text-rose-500' : ''
               }`}
             />
           </div>
           {errors.amount && (
-            <p className="text-xs text-rose-500 font-medium mt-1">{errors.amount}</p>
+            <p className="text-xs text-rose-500 font-medium mt-1.5">{errors.amount}</p>
           )}
         </div>
 
@@ -351,41 +395,6 @@ export const TransactionFormModal = ({
           value={formData.tags}
           onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
         />
-
-        {/* Action Buttons */}
-        <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 pt-4 border-t border-zinc-100 dark:border-white/8 mt-4">
-          <Button
-            variant="outline"
-            size="md"
-            onClick={onClose}
-            disabled={isLoading}
-            className="w-full sm:w-auto text-xs font-bold"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            size="md"
-            isLoading={isLoading}
-            variant={isTransfer ? 'primary' : isExpense ? 'danger' : 'primary'}
-            icon={initialData ? Check : Plus}
-            className={`w-full sm:w-auto text-xs font-bold ${
-              isTransfer ? '!bg-violet-600 hover:!bg-violet-700 !text-white' : ''
-            }`}
-          >
-            {initialData
-              ? isTransfer
-                ? 'Update Transfer'
-                : isExpense
-                ? 'Update Expense'
-                : 'Update Income'
-              : isTransfer
-              ? 'Complete Transfer'
-              : isExpense
-              ? 'Record Expense'
-              : 'Record Income'}
-          </Button>
-        </div>
       </form>
     </Modal>
   );

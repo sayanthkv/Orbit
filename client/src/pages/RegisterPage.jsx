@@ -112,27 +112,6 @@ export const RegisterPage = () => {
                 <>Get Started Free <ArrowRight className="w-4 h-4" /></>
               )}
             </button>
-
-            <div className="relative my-2 text-center">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/10" />
-              </div>
-              <span className="relative px-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500 bg-[#141418]">
-                or
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={async () => {
-                const res = await loginAsDemo();
-                if (res.success) navigate('/');
-              }}
-              className="w-full py-2.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Explore Live Demo Mode (1-Click)</span>
-            </button>
           </form>
 
           <div className="flex items-center justify-center gap-2 text-[11px] text-zinc-700">
