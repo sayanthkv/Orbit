@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, ArrowRight, ShieldCheck, UserCheck, X } from 'lucide-react';
@@ -23,10 +23,17 @@ export const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isOneClickLoading, setIsOneClickLoading] = useState(false);
 
-  const { login, attemptOneClickLogin } = useAuth();
+  const { user, isAuthenticated, login, attemptOneClickLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
+
+  // If already authenticated, redirect straight to app without showing login
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, user, navigate, from]);
 
   const validate = () => {
     const errs = {};
@@ -53,10 +60,12 @@ export const LoginPage = () => {
     if (result.success) {
       navigate(from, { replace: true });
     } else {
-      // Session needs password entry, prefill email and focus password
+      setUseOtherAccount(true);
       setFormData((prev) => ({ ...prev, email: savedAccount.email }));
-      const pwdEl = document.getElementById('login-password-input');
-      if (pwdEl) pwdEl.focus();
+      setTimeout(() => {
+        const pwdEl = document.getElementById('login-password-input');
+        if (pwdEl) pwdEl.focus();
+      }, 50);
     }
   };
 
@@ -64,6 +73,9 @@ export const LoginPage = () => {
     e.stopPropagation();
     try {
       localStorage.removeItem('orbit_saved_account');
+      localStorage.removeItem('orbit_device_token');
+      localStorage.removeItem('orbit_token');
+      localStorage.removeItem('orbit_refresh_token');
     } catch {}
     setSavedAccount(null);
     setUseOtherAccount(true);
@@ -118,7 +130,7 @@ export const LoginPage = () => {
           </div>
 
           {/* 1-Click Login Suggestion Card (if previously logged in) */}
-          {showSavedQuickLogin && (
+          {showSavedQuickLogin ? (
             <div className="space-y-4">
               <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/10 hover:border-white/20 transition-all flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
@@ -161,21 +173,10 @@ export const LoginPage = () => {
                   </>
                 )}
               </button>
-
-              <div className="relative my-1 text-center">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/10" />
-                </div>
-                <span className="relative px-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500 bg-[#121216]">
-                  or enter password
-                </span>
-              </div>
             </div>
-          )}
-
-          {/* Standard Form (Or password entry for saved account) */}
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            {(!showSavedQuickLogin || useOtherAccount) && (
+          ) : (
+            /* Standard Form for new logins or switching accounts */
+            <form onSubmit={handleSubmit} className="space-y-3.5">
               <Input
                 label="Email"
                 type="email"
@@ -187,41 +188,39 @@ export const LoginPage = () => {
                 error={errors.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
-            )}
 
-            <Input
-              id="login-password-input"
-              label={showSavedQuickLogin ? `Password for ${savedAccount.email}` : 'Password'}
-              type="password"
-              autoComplete="current-password"
-              placeholder="••••••••"
-              icon={Lock}
-              required
-              value={formData.password}
-              error={errors.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            />
+              <Input
+                id="login-password-input"
+                label="Password"
+                type="password"
+                autoComplete="current-password"
+                placeholder="••••••••"
+                icon={Lock}
+                required
+                value={formData.password}
+                error={errors.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-full text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer mt-1"
-              style={{
-                background: showSavedQuickLogin
-                  ? 'rgba(255,255,255,0.08)'
-                  : 'linear-gradient(135deg, #10b981, #059669)',
-                border: showSavedQuickLogin ? '1px solid rgba(255,255,255,0.15)' : 'none',
-                boxShadow: showSavedQuickLogin ? 'none' : '0 8px 24px rgba(16,185,129,0.3)',
-                color: '#fff',
-              }}
-            >
-              {isLoading ? (
-                <span className="animate-pulse">Signing in...</span>
-              ) : (
-                <>Sign In With Password <ArrowRight className="w-4 h-4" /></>
-              )}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-full text-sm font-bold transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-lg shadow-emerald-500/25 text-white mt-1"
+                style={{
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                }}
+              >
+                {isLoading ? (
+                  <span className="animate-pulse">Signing in...</span>
+                ) : (
+                  <>
+                    <span>Sign In</span>
+                    <ArrowRight className="w-4 h-4 ml-0.5" />
+                  </>
+                )}
+              </button>
+            </form>
+          )}
 
           {/* Switch Account toggle if saved account exists */}
           {savedAccount && (

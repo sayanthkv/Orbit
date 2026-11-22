@@ -56,6 +56,14 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Device Tokens for One-Click Passwordless Login on Trusted Devices
+    deviceTokens: [
+      {
+        tokenHash: { type: String, required: true },
+        expiresAt: { type: Date, required: true },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
     twoFactorSecret: {
       type: String,
       select: false,

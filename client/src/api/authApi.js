@@ -4,6 +4,7 @@ export const authApi = {
   register: (userData) => api.post('/auth/register', userData),
   login: (credentials) => api.post('/auth/login', credentials),
   login2FA: (data) => api.post('/auth/login/2fa', data),
+  quickLogin: (data) => api.post('/auth/quick-login', data),
   demoLogin: () => api.post('/auth/demo'),
   refreshToken: (data = {}) => api.post('/auth/refresh', data),
   logout: () => api.post('/auth/logout'),

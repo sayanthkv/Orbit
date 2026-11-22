@@ -52,7 +52,7 @@ const issueTokens = async (user, existingFamily = null) => {
   const family = existingFamily || crypto.randomUUID();
   const rawRefreshToken = crypto.randomBytes(32).toString('hex');
   const tokenHash = crypto.createHash('sha256').update(rawRefreshToken).digest('hex');
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 90 days
 
   const accessToken = signToken(user._id, '1h');
 
@@ -76,6 +76,29 @@ const issueTokens = async (user, existingFamily = null) => {
     refreshToken: rawRefreshToken,
     family,
   };
+};
+
+/**
+ * Issue or rotate a trusted device token for one-click passwordless return
+ */
+const issueDeviceToken = async (user) => {
+  const rawDeviceToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(rawDeviceToken).digest('hex');
+  const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 90 days
+
+  user.deviceTokens = (user.deviceTokens || []).filter((d) => d.expiresAt > new Date());
+  user.deviceTokens.push({
+    tokenHash,
+    expiresAt,
+    createdAt: new Date(),
+  });
+
+  if (user.deviceTokens.length > 10) {
+    user.deviceTokens = user.deviceTokens.slice(-10);
+  }
+
+  await user.save({ validateBeforeSave: false });
+  return rawDeviceToken;
 };
 
 // @desc    Register a new user
@@ -102,8 +125,9 @@ const register = async (req, res, next) => {
     });
 
     const { accessToken, refreshToken } = await issueTokens(user);
+    const deviceToken = await issueDeviceToken(user);
     res.cookie('token', accessToken, getCookieOptions(60 * 60 * 1000));
-    res.cookie('refreshToken', refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
+    res.cookie('refreshToken', refreshToken, getCookieOptions(90 * 24 * 60 * 60 * 1000));
 
     await AuditLog.log({
       user: user._id,
@@ -132,6 +156,7 @@ const register = async (req, res, next) => {
         },
         token: accessToken,
         refreshToken,
+        deviceToken,
       },
     });
   } catch (error) {
@@ -184,8 +209,9 @@ const login = async (req, res, next) => {
     }
 
     const { accessToken, refreshToken } = await issueTokens(user);
+    const deviceToken = await issueDeviceToken(user);
     res.cookie('token', accessToken, getCookieOptions(60 * 60 * 1000));
-    res.cookie('refreshToken', refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
+    res.cookie('refreshToken', refreshToken, getCookieOptions(90 * 24 * 60 * 60 * 1000));
 
     await AuditLog.log({
       user: user._id,
@@ -213,6 +239,7 @@ const login = async (req, res, next) => {
         },
         token: accessToken,
         refreshToken,
+        deviceToken,
       },
     });
   } catch (error) {
@@ -288,8 +315,9 @@ const login2FA = async (req, res, next) => {
     }
 
     const { accessToken, refreshToken } = await issueTokens(user);
+    const deviceToken = await issueDeviceToken(user);
     res.cookie('token', accessToken, getCookieOptions(60 * 60 * 1000));
-    res.cookie('refreshToken', refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
+    res.cookie('refreshToken', refreshToken, getCookieOptions(90 * 24 * 60 * 60 * 1000));
 
     await AuditLog.log({
       user: user._id,
@@ -317,6 +345,7 @@ const login2FA = async (req, res, next) => {
         },
         token: accessToken,
         refreshToken,
+        deviceToken,
       },
     });
   } catch (error) {
@@ -768,10 +797,97 @@ const demoLogin = async (req, res, next) => {
   }
 };
 
+// @desc    One-click Quick Login with trusted device token (Passwordless)
+// @route   POST /api/auth/quick-login
+// @access  Public
+const quickLogin = async (req, res, next) => {
+  try {
+    const { email, deviceToken } = req.body;
+    if (!email || !deviceToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and deviceToken are required for quick login.',
+      });
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(deviceToken).digest('hex');
+    const user = await User.findOne({
+      email: email.toLowerCase().trim(),
+      'deviceTokens.tokenHash': tokenHash,
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired device session. Please sign in with your password.',
+      });
+    }
+
+    const deviceRecord = user.deviceTokens.find((d) => d.tokenHash === tokenHash);
+    if (!deviceRecord || deviceRecord.expiresAt < new Date()) {
+      user.deviceTokens = user.deviceTokens.filter((d) => d.tokenHash !== tokenHash);
+      await user.save({ validateBeforeSave: false });
+      return res.status(401).json({
+        success: false,
+        message: 'Device session has expired. Please sign in with your password.',
+      });
+    }
+
+    // Rotate device token and issue fresh access and refresh tokens
+    user.deviceTokens = user.deviceTokens.filter((d) => d.tokenHash !== tokenHash);
+    const newDeviceToken = crypto.randomBytes(32).toString('hex');
+    const newDeviceHash = crypto.createHash('sha256').update(newDeviceToken).digest('hex');
+    user.deviceTokens.push({
+      tokenHash: newDeviceHash,
+      expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
+      createdAt: new Date(),
+    });
+
+    const { accessToken, refreshToken } = await issueTokens(user);
+    res.cookie('token', accessToken, getCookieOptions(60 * 60 * 1000));
+    res.cookie('refreshToken', refreshToken, getCookieOptions(90 * 24 * 60 * 60 * 1000));
+
+    await user.save({ validateBeforeSave: false });
+
+    await AuditLog.log({
+      user: user._id,
+      action: 'LOGIN',
+      req,
+      details: { method: 'one_click_device_token' },
+    });
+
+    processDueRecurringTransactions(user._id).catch(() => {});
+
+    res.status(200).json({
+      success: true,
+      message: `Welcome back, ${user.name}!`,
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          currency: user.currency,
+          themePreference: user.themePreference,
+          twoFactorEnabled: user.twoFactorEnabled,
+          initialBalance: user.initialBalance || 0,
+          hasSetInitialBalance: !!user.hasSetInitialBalance,
+          createdAt: user.createdAt,
+        },
+        token: accessToken,
+        refreshToken,
+        deviceToken: newDeviceToken,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
   login2FA,
+  quickLogin,
   refreshTokenHandler,
   setup2FA,
   verify2FA,

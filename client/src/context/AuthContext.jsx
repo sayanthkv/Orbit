@@ -27,8 +27,18 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     const token = localStorage.getItem('orbit_token');
-    // If no token stored and no session, user is simply not logged in yet - avoid spamming 401s
-    if (!token && !document.cookie.includes('token')) {
+    const storedRefreshToken = localStorage.getItem('orbit_refresh_token');
+    const storedDeviceToken = localStorage.getItem('orbit_device_token');
+    const savedAccount = (() => {
+      try {
+        return JSON.parse(localStorage.getItem('orbit_saved_account') || 'null');
+      } catch {
+        return null;
+      }
+    })();
+
+    // If no tokens stored and no session, user is simply not logged in yet
+    if (!token && !storedRefreshToken && !storedDeviceToken && !document.cookie.includes('token')) {
       setUser(null);
       setLoading(false);
       return;
@@ -36,17 +46,18 @@ export const AuthProvider = ({ children }) => {
 
     try {
       setLoading(true);
-      const res = await authApi.getMe();
-      if (res.success && res.data?.user) {
-        setUser(res.data.user);
-        saveAccountProfile(res.data.user);
-      } else {
-        setUser(null);
+      if (token) {
+        const res = await authApi.getMe();
+        if (res?.success && res.data?.user) {
+          setUser(res.data.user);
+          saveAccountProfile(res.data.user);
+          return;
+        }
       }
+      throw new Error('Initial access token invalid or missing');
     } catch (err) {
-      // Try refresh token if access token expired
+      // 1. Try refresh token if access token expired
       try {
-        const storedRefreshToken = localStorage.getItem('orbit_refresh_token');
         if (storedRefreshToken) {
           const refRes = await authApi.refreshToken({ refreshToken: storedRefreshToken });
           if (refRes?.success && refRes.data?.token) {
@@ -55,7 +66,7 @@ export const AuthProvider = ({ children }) => {
               localStorage.setItem('orbit_refresh_token', refRes.data.refreshToken);
             }
             const meRes = await authApi.getMe();
-            if (meRes.success && meRes.data?.user) {
+            if (meRes?.success && meRes.data?.user) {
               setUser(meRes.data.user);
               saveAccountProfile(meRes.data.user);
               return;
@@ -63,6 +74,25 @@ export const AuthProvider = ({ children }) => {
           }
         }
       } catch {}
+
+      // 2. Try one-click device token (passwordless return for known devices)
+      try {
+        if (storedDeviceToken && savedAccount?.email) {
+          const qRes = await authApi.quickLogin({
+            email: savedAccount.email,
+            deviceToken: storedDeviceToken,
+          });
+          if (qRes?.success && qRes.data?.user) {
+            if (qRes.data.token) localStorage.setItem('orbit_token', qRes.data.token);
+            if (qRes.data.refreshToken) localStorage.setItem('orbit_refresh_token', qRes.data.refreshToken);
+            if (qRes.data.deviceToken) localStorage.setItem('orbit_device_token', qRes.data.deviceToken);
+            setUser(qRes.data.user);
+            saveAccountProfile(qRes.data.user);
+            return;
+          }
+        }
+      } catch {}
+
       setUser(null);
     } finally {
       setLoading(false);
@@ -83,6 +113,12 @@ export const AuthProvider = ({ children }) => {
         if (res.data.refreshToken) {
           localStorage.setItem('orbit_refresh_token', res.data.refreshToken);
         }
+        if (res.data.deviceToken) {
+          localStorage.setItem('orbit_device_token', res.data.deviceToken);
+        }
+        if (res.data.deviceToken) {
+          localStorage.setItem('orbit_device_token', res.data.deviceToken);
+        }
         setUser(res.data.user);
         saveAccountProfile(res.data.user);
         toast.success(res.message || 'Logged in successfully!');
@@ -98,18 +134,36 @@ export const AuthProvider = ({ children }) => {
   const attemptOneClickLogin = async () => {
     try {
       setLoading(true);
+      if (user) {
+        return { success: true };
+      }
+
       const storedToken = localStorage.getItem('orbit_token');
       const storedRefreshToken = localStorage.getItem('orbit_refresh_token');
+      const storedDeviceToken = localStorage.getItem('orbit_device_token');
+      const savedAccount = (() => {
+        try {
+          return JSON.parse(localStorage.getItem('orbit_saved_account') || 'null');
+        } catch {
+          return null;
+        }
+      })();
 
-      // Attempt session restoration via token
-      let res;
+      // 1. Attempt session restoration via current access token
       if (storedToken) {
         try {
-          res = await authApi.getMe();
+          const res = await authApi.getMe();
+          if (res?.success && res.data?.user) {
+            setUser(res.data.user);
+            saveAccountProfile(res.data.user);
+            toast.success(`Welcome back, ${res.data.user.name || 'there'}!`);
+            return { success: true };
+          }
         } catch {}
       }
 
-      if (!res?.success && storedRefreshToken) {
+      // 2. Attempt token refresh
+      if (storedRefreshToken) {
         try {
           const refRes = await authApi.refreshToken({ refreshToken: storedRefreshToken });
           if (refRes?.success && refRes.data?.token) {
@@ -117,17 +171,36 @@ export const AuthProvider = ({ children }) => {
             if (refRes.data.refreshToken) {
               localStorage.setItem('orbit_refresh_token', refRes.data.refreshToken);
             }
-            res = await authApi.getMe();
+            const meRes = await authApi.getMe();
+            if (meRes?.success && meRes.data?.user) {
+              setUser(meRes.data.user);
+              saveAccountProfile(meRes.data.user);
+              toast.success(`Welcome back, ${meRes.data.user.name || 'there'}!`);
+              return { success: true };
+            }
           }
         } catch {}
       }
 
-      if (res?.success && res?.data?.user) {
-        setUser(res.data.user);
-        saveAccountProfile(res.data.user);
-        toast.success(`Welcome back, ${res.data.user.name || 'there'}!`);
-        return { success: true };
+      // 3. Attempt Quick Login via trusted device token (Passwordless)
+      if (storedDeviceToken && savedAccount?.email) {
+        try {
+          const qRes = await authApi.quickLogin({
+            email: savedAccount.email,
+            deviceToken: storedDeviceToken,
+          });
+          if (qRes?.success && qRes.data?.user) {
+            if (qRes.data.token) localStorage.setItem('orbit_token', qRes.data.token);
+            if (qRes.data.refreshToken) localStorage.setItem('orbit_refresh_token', qRes.data.refreshToken);
+            if (qRes.data.deviceToken) localStorage.setItem('orbit_device_token', qRes.data.deviceToken);
+            setUser(qRes.data.user);
+            saveAccountProfile(qRes.data.user);
+            toast.success(`Welcome back, ${qRes.data.user.name || 'there'}!`);
+            return { success: true };
+          }
+        } catch {}
       }
+
       return { success: false, requiresPassword: true };
     } catch {
       return { success: false, requiresPassword: true };
@@ -166,6 +239,9 @@ export const AuthProvider = ({ children }) => {
         }
         if (res.data.refreshToken) {
           localStorage.setItem('orbit_refresh_token', res.data.refreshToken);
+        }
+        if (res.data.deviceToken) {
+          localStorage.setItem('orbit_device_token', res.data.deviceToken);
         }
         setUser(res.data.user);
         saveAccountProfile(res.data.user);

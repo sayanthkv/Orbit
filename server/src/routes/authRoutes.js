@@ -4,6 +4,7 @@ const {
   register,
   login,
   login2FA,
+  quickLogin,
   refreshTokenHandler,
   setup2FA,
   verify2FA,
@@ -26,6 +27,7 @@ const {
 router.post('/register', validate(registerSchema), register);
 router.post('/login', validate(loginSchema), login);
 router.post('/login/2fa', login2FA);
+router.post('/quick-login', quickLogin);
 router.post('/refresh', refreshTokenHandler);
 router.post('/demo', demoLogin);
 router.post('/logout', logout);

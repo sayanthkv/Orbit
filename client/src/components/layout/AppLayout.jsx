@@ -91,8 +91,8 @@ export const AppLayout = () => {
         <Outlet />
       </main>
 
-      {/* Mobile Floating Bottom Navigation */}
-      <BottomNav onOpenAddModal={handleOpenAddModal} />
+      {/* Mobile Floating Bottom Navigation - hidden when modal is open */}
+      <BottomNav onOpenAddModal={handleOpenAddModal} isHidden={isAddModalOpen} />
 
       {/* Global Quick Add Transaction Modal */}
       <TransactionFormModal

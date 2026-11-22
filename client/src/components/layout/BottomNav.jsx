@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -8,7 +8,32 @@ import {
   Plus,
 } from 'lucide-react';
 
-export const BottomNav = ({ onOpenAddModal }) => {
+export const BottomNav = ({ onOpenAddModal, isHidden = false }) => {
+  const [isModalActive, setIsModalActive] = useState(false);
+
+  useEffect(() => {
+    // Check if any modal is currently open by inspecting body class
+    const checkModalState = () => {
+      const modalOpen = document.body.classList.contains('orbit-modal-open');
+      setIsModalActive(modalOpen);
+    };
+
+    checkModalState();
+
+    // Observe body class changes so BottomNav instantly unmounts when any modal opens
+    const observer = new MutationObserver(checkModalState);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  // Completely unmount BottomNav if hidden prop is set or any modal is open
+  if (isHidden || isModalActive) {
+    return null;
+  }
+
   return (
     <div className="fixed bottom-2.5 inset-x-3 max-w-md mx-auto z-30 md:hidden pb-[env(safe-area-inset-bottom)] orbit-bottom-nav">
       {/* Outer Floating Pill Container */}

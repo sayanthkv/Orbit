@@ -27,7 +27,12 @@ export const SmartInsightsCard = ({ month, year, accountId }) => {
     const fetchInsights = async () => {
       try {
         setLoading(true);
-        const res = await analyticsApi.getSmartInsights(month, year, accountId);
+        const fetchFn = analyticsApi.getSmartInsights || analyticsApi.getInsights;
+        if (!fetchFn) {
+          setInsights([]);
+          return;
+        }
+        const res = await fetchFn(month, year, accountId);
         if (res?.success) {
           setInsights(res.data || []);
         }

@@ -29,6 +29,10 @@ export const analyticsApi = {
     api.get('/analytics/insights', {
       params: cleanParams({ month, year, accountId: accountId && accountId !== 'all' ? accountId : undefined }),
     }),
+  getSmartInsights: (month, year, accountId) =>
+    api.get('/analytics/insights', {
+      params: cleanParams({ month, year, accountId: accountId && accountId !== 'all' ? accountId : undefined }),
+    }),
 };
 
 export default analyticsApi;
