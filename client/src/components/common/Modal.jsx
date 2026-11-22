@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 export const Modal = ({
@@ -18,28 +19,30 @@ export const Modal = ({
     };
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('orbit-modal-open');
       window.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.body.style.overflow = 'unset';
+      document.body.classList.remove('orbit-modal-open');
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-black/80 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-black/80 backdrop-blur-md animate-fade-in"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className={`relative bg-white dark:bg-[#141418] border-t sm:border border-zinc-200/90 dark:border-white/12 rounded-t-[32px] sm:rounded-[28px] w-full ${maxWidth} max-h-[92dvh] sm:max-h-[88vh] flex flex-col shadow-[0_25px_80px_rgba(0,0,0,0.85)] animate-slide-up sm:animate-scale-up transition-all overflow-hidden`}
+        className={`relative bg-white dark:bg-[#141418] border-t sm:border border-zinc-200/90 dark:border-white/12 rounded-t-[32px] sm:rounded-[28px] w-full ${maxWidth} max-h-[90dvh] sm:max-h-[85vh] flex flex-col shadow-[0_-12px_40px_rgba(0,0,0,0.6)] sm:shadow-[0_25px_80px_rgba(0,0,0,0.85)] animate-slide-up sm:animate-scale-up transition-all overflow-hidden`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Mobile Drag / Grab Handle Indicator */}
+        {/* Mobile Grab Handle */}
         <div className="w-12 h-1.5 bg-zinc-300 dark:bg-white/20 rounded-full mx-auto my-2.5 sm:hidden shrink-0" />
 
         {/* Modal Header */}
@@ -68,15 +71,17 @@ export const Modal = ({
           {children}
         </div>
 
-        {/* Optional Sticky Footer */}
+        {/* Sticky Action Footer */}
         {footer && (
-          <div className="shrink-0 p-4 sm:p-5 border-t border-zinc-100 dark:border-white/8 bg-zinc-50/90 dark:bg-[#16161c]/90 backdrop-blur-md pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="shrink-0 p-4 sm:p-5 border-t border-zinc-100 dark:border-white/8 bg-white dark:bg-[#141418] pb-[max(1rem,env(safe-area-inset-bottom))]">
             {footer}
           </div>
         )}
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };
 
 export default Modal;

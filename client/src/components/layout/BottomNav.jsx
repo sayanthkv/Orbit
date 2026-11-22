@@ -10,7 +10,7 @@ import {
 
 export const BottomNav = ({ onOpenAddModal }) => {
   return (
-    <div className="fixed bottom-2.5 inset-x-3 max-w-md mx-auto z-30 md:hidden pb-[env(safe-area-inset-bottom)]">
+    <div className="fixed bottom-2.5 inset-x-3 max-w-md mx-auto z-30 md:hidden pb-[env(safe-area-inset-bottom)] orbit-bottom-nav">
       {/* Outer Floating Pill Container */}
       <div className="bg-white/95 border border-zinc-200/90 shadow-[0_12px_36px_rgba(0,0,0,0.18)] dark:bg-[#141418]/95 dark:border-white/12 dark:shadow-[0_20px_48px_rgba(0,0,0,0.85)] rounded-full p-1.5 backdrop-blur-xl transition-all">
         {/* Inner Track */}

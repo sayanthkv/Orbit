@@ -26,6 +26,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   const checkAuth = async () => {
+    const token = localStorage.getItem('orbit_token');
+    // If no token stored and no session, user is simply not logged in yet - avoid spamming 401s
+    if (!token && !document.cookie.includes('token')) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const res = await authApi.getMe();
@@ -36,6 +44,25 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
       }
     } catch (err) {
+      // Try refresh token if access token expired
+      try {
+        const storedRefreshToken = localStorage.getItem('orbit_refresh_token');
+        if (storedRefreshToken) {
+          const refRes = await authApi.refreshToken({ refreshToken: storedRefreshToken });
+          if (refRes?.success && refRes.data?.token) {
+            localStorage.setItem('orbit_token', refRes.data.token);
+            if (refRes.data.refreshToken) {
+              localStorage.setItem('orbit_refresh_token', refRes.data.refreshToken);
+            }
+            const meRes = await authApi.getMe();
+            if (meRes.success && meRes.data?.user) {
+              setUser(meRes.data.user);
+              saveAccountProfile(meRes.data.user);
+              return;
+            }
+          }
+        }
+      } catch {}
       setUser(null);
     } finally {
       setLoading(false);
@@ -50,6 +77,12 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await authApi.login(credentials);
       if (res.success && res.data?.user) {
+        if (res.data.token) {
+          localStorage.setItem('orbit_token', res.data.token);
+        }
+        if (res.data.refreshToken) {
+          localStorage.setItem('orbit_refresh_token', res.data.refreshToken);
+        }
         setUser(res.data.user);
         saveAccountProfile(res.data.user);
         toast.success(res.message || 'Logged in successfully!');
@@ -65,16 +98,28 @@ export const AuthProvider = ({ children }) => {
   const attemptOneClickLogin = async () => {
     try {
       setLoading(true);
-      // Attempt session restoration via token/refresh
+      const storedToken = localStorage.getItem('orbit_token');
+      const storedRefreshToken = localStorage.getItem('orbit_refresh_token');
+
+      // Attempt session restoration via token
       let res;
-      try {
-        res = await authApi.getMe();
-      } catch {
-        // try refresh
-        const refRes = await authApi.refreshToken();
-        if (refRes.success) {
+      if (storedToken) {
+        try {
           res = await authApi.getMe();
-        }
+        } catch {}
+      }
+
+      if (!res?.success && storedRefreshToken) {
+        try {
+          const refRes = await authApi.refreshToken({ refreshToken: storedRefreshToken });
+          if (refRes?.success && refRes.data?.token) {
+            localStorage.setItem('orbit_token', refRes.data.token);
+            if (refRes.data.refreshToken) {
+              localStorage.setItem('orbit_refresh_token', refRes.data.refreshToken);
+            }
+            res = await authApi.getMe();
+          }
+        } catch {}
       }
 
       if (res?.success && res?.data?.user) {
@@ -96,6 +141,9 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const res = await authApi.demoLogin();
       if (res.success && res.data?.user) {
+        if (res.data.token) {
+          localStorage.setItem('orbit_token', res.data.token);
+        }
         setUser(res.data.user);
         toast.success('Welcome to Orbit Demo Mode! Explore preloaded data.');
         return { success: true };
@@ -113,6 +161,12 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await authApi.register(userData);
       if (res.success && res.data?.user) {
+        if (res.data.token) {
+          localStorage.setItem('orbit_token', res.data.token);
+        }
+        if (res.data.refreshToken) {
+          localStorage.setItem('orbit_refresh_token', res.data.refreshToken);
+        }
         setUser(res.data.user);
         saveAccountProfile(res.data.user);
         toast.success(res.message || 'Account created successfully!');
@@ -128,11 +182,11 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await authApi.logout();
-      setUser(null);
-      toast.info('You have been logged out.');
-    } catch (err) {
-      setUser(null);
-    }
+    } catch {}
+    localStorage.removeItem('orbit_token');
+    localStorage.removeItem('orbit_refresh_token');
+    setUser(null);
+    toast.info('You have been logged out.');
   };
 
   const updatePreferences = async (preferences) => {
@@ -176,3 +230,5 @@ export const useAuth = () => {
   }
   return context;
 };
+
+export default AuthContext;

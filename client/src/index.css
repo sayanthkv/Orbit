@@ -85,3 +85,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .animate-scale-up {
   animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Hide floating mobile bottom navigation bar whenever any modal is open */
+body.orbit-modal-open .orbit-bottom-nav,
+body.orbit-modal-open #orbit-bottom-nav {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
