@@ -85,31 +85,28 @@ body.orbit-modal-open [data-orbit-bottom-nav] {
   }
 }
 
-/* Orbit Cosmic Liquid Metaball Loader */
+/* Orbit Minimal Cosmic Loader */
 .loader, .orbit-loader {
-  --loader-size: 72px;
+  --loader-size: 32px;
   width: var(--loader-size);
   aspect-ratio: 1;
-  border: calc(var(--loader-size) * 0.125) solid #0000;
   box-sizing: border-box;
   background: 
-    radial-gradient(farthest-side, #34d399 98%, #0000) 0 0 / calc(var(--loader-size) * 0.25) calc(var(--loader-size) * 0.25),
-    radial-gradient(farthest-side, #10b981 98%, #0000) 100% 0 / calc(var(--loader-size) * 0.25) calc(var(--loader-size) * 0.25),
-    radial-gradient(farthest-side, #38bdf8 98%, #0000) 100% 100% / calc(var(--loader-size) * 0.25) calc(var(--loader-size) * 0.25),
-    radial-gradient(farthest-side, #10b981 98%, #0000) 0 100% / calc(var(--loader-size) * 0.25) calc(var(--loader-size) * 0.25),
-    linear-gradient(#059669 0 0) 50% / calc(var(--loader-size) * 0.5) calc(var(--loader-size) * 0.5),
-    #09090b;
+    radial-gradient(circle closest-side, #10b981 88%, #0000 92%) 0 0 / calc(var(--loader-size) * 0.28) calc(var(--loader-size) * 0.28),
+    radial-gradient(circle closest-side, #34d399 88%, #0000 92%) 100% 0 / calc(var(--loader-size) * 0.28) calc(var(--loader-size) * 0.28),
+    radial-gradient(circle closest-side, #06b6d4 88%, #0000 92%) 100% 100% / calc(var(--loader-size) * 0.28) calc(var(--loader-size) * 0.28),
+    radial-gradient(circle closest-side, #10b981 88%, #0000 92%) 0 100% / calc(var(--loader-size) * 0.28) calc(var(--loader-size) * 0.28),
+    radial-gradient(circle closest-side, rgba(16, 185, 129, 0.22) 88%, #0000 92%) 50% 50% / calc(var(--loader-size) * 0.2) calc(var(--loader-size) * 0.2);
   background-repeat: no-repeat;
-  filter: blur(calc(var(--loader-size) * 0.05)) contrast(8) drop-shadow(0 0 14px rgba(16, 185, 129, 0.45));
-  border-radius: 18px;
-  animation: l12 0.85s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.25));
+  animation: l12 0.9s infinite cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-block;
 }
 
-.loader.loader-sm { --loader-size: 32px; border-radius: 8px; }
-.loader.loader-md { --loader-size: 54px; border-radius: 14px; }
-.loader.loader-lg { --loader-size: 76px; border-radius: 20px; }
-.loader.loader-xl { --loader-size: 96px; border-radius: 24px; }
+.loader.loader-sm { --loader-size: 20px; }
+.loader.loader-md { --loader-size: 32px; }
+.loader.loader-lg { --loader-size: 44px; }
+.loader.loader-xl { --loader-size: 56px; }
 
 @keyframes l12 {
   100% {

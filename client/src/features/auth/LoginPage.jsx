@@ -4,9 +4,10 @@ import { useAuth } from '../../app/AuthContext';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Spinner from '../../components/Spinner';
+import OrbitLoader from '../../components/OrbitLoader';
 import ParallaxBackground from '../../components/parallax/ParallaxBackground';
 import ParallaxCard from '../../components/parallax/ParallaxCard';
-import { Mail, Lock, ArrowRight, X, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, ArrowRight, X, ShieldCheck, UserCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const LoginPage = () => {
@@ -14,9 +15,8 @@ export const LoginPage = () => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [lastUser, setLastUser] = useState(null);
-  const [showPasswordFallback, setShowPasswordFallback] = useState(false);
 
-  const { login, checkAuth, isAuthenticated, loading } = useAuth();
+  const { login, quickLogin, checkAuth, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
@@ -43,21 +43,30 @@ export const LoginPage = () => {
   // Handle one-click continue without entering password
   const handleOneClickLogin = async () => {
     setIsLoading(true);
+    // 1. Check existing active session token
     const res = await checkAuth();
-    setIsLoading(false);
-
     if (res.success) {
+      setIsLoading(false);
       navigate(from, { replace: true });
-    } else {
-      // Session has truly expired, let user authenticate
-      setShowPasswordFallback(true);
+      return;
     }
+
+    // 2. Auto-resume for remembered user without password
+    if (lastUser?.email && quickLogin) {
+      const qRes = await quickLogin(lastUser.email);
+      setIsLoading(false);
+      if (qRes.success) {
+        navigate(from, { replace: true });
+        return;
+      }
+    }
+
+    setIsLoading(false);
   };
 
   const handleRemoveSavedUser = () => {
     localStorage.removeItem('orbit_last_user');
     setLastUser(null);
-    setShowPasswordFallback(false);
     setFormData({ email: '', password: '' });
   };
 
@@ -86,12 +95,8 @@ export const LoginPage = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-zinc-50 dark:bg-[#09090b] relative">
         <ParallaxBackground />
-        <div className="flex flex-col items-center gap-3 relative z-10">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-emerald-600/30 font-display">
-            O
-          </div>
-          <Spinner size="md" className="text-emerald-500 mt-2" />
-          <p className="text-xs text-zinc-400 font-semibold tracking-wide">Resuming Orbit session...</p>
+        <div className="relative z-10">
+          <OrbitLoader size="lg" label="Resuming Orbit session..." />
         </div>
       </div>
     );
@@ -117,17 +122,17 @@ export const LoginPage = () => {
               O
             </div>
             <h1 className="text-2xl font-extrabold text-zinc-900 dark:text-white tracking-tight pt-1 font-display">
-              {lastUser && !showPasswordFallback ? 'Welcome back' : 'Sign in to Orbit'}
+              {lastUser ? 'Welcome back' : 'Sign in to Orbit'}
             </h1>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {lastUser && !showPasswordFallback
+              {lastUser
                 ? 'Quickly resume where you left off'
                 : 'Your personal life tools suite'}
             </p>
           </div>
 
-          {/* One-Click Resume Card (When Saved User Exists) */}
-          {lastUser && !showPasswordFallback ? (
+          {/* One-Click Resume Card (When Saved User Exists) - NO PASSWORD SECTION */}
+          {lastUser ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3.5 rounded-2xl bg-zinc-100/80 dark:bg-white/5 border border-zinc-200/80 dark:border-white/8">
                 <div className="flex items-center gap-3 min-w-0">
@@ -146,7 +151,7 @@ export const LoginPage = () => {
                 <button
                   type="button"
                   onClick={handleRemoveSavedUser}
-                  title="Forget this account"
+                  title="Sign in with different account"
                   className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-white rounded-lg hover:bg-zinc-200/50 dark:hover:bg-white/10 transition-colors"
                 >
                   <X className="w-4 h-4" />
@@ -163,21 +168,21 @@ export const LoginPage = () => {
                 iconPosition="right"
                 onClick={handleOneClickLogin}
               >
-                Continue as {lastUser.name.split(' ')[0]}
+                Continue as {lastUser.name ? lastUser.name.split(' ')[0] : 'User'}
               </Button>
 
               <div className="text-center pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowPasswordFallback(true)}
+                  onClick={handleRemoveSavedUser}
                   className="text-xs text-zinc-500 hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400 transition-colors cursor-pointer"
                 >
-                  Sign in with password or different account
+                  Sign in with a different email
                 </button>
               </div>
             </div>
           ) : (
-            /* Standard Login Form */
+            /* Standard Login Form (For new accounts or different email) */
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
                 label="Email"
@@ -214,18 +219,6 @@ export const LoginPage = () => {
               >
                 Sign In
               </Button>
-
-              {lastUser && (
-                <div className="text-center pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswordFallback(false)}
-                    className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors cursor-pointer"
-                  >
-                    ← Back to one-click login
-                  </button>
-                </div>
-              )}
             </form>
           )}
 

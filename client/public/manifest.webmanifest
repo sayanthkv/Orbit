@@ -1,0 +1,65 @@
+{
+  "name": "Orbit",
+  "short_name": "Orbit",
+  "description": "Your personal life tools suite & intelligent expense tracker",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#10b981",
+  "background_color": "#09090b",
+  "categories": ["finance", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/maskable-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add expense",
+      "short_name": "Add Expense",
+      "description": "Log a new expense outflow against your accounts",
+      "url": "/tools/expense-tracker?action=add-expense",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Add income",
+      "short_name": "Add Income",
+      "description": "Record an income deposit",
+      "url": "/tools/expense-tracker?action=add-income",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mileage tester",
+      "short_name": "Mileage Tester",
+      "description": "Calculate trip mileage and fuel efficiency",
+      "url": "/tools/vehicle-log/mileage-tester",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Log fuel",
+      "short_name": "Log Fuel",
+      "description": "Record a vehicle fuel fill-up",
+      "url": "/tools/vehicle-log/fuel",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

@@ -13,6 +13,7 @@ const searchRoutes = require('./searchRoutes');
 const reportRoutes = require('./reportRoutes');
 const insightRoutes = require('./insightRoutes');
 const uploadRoutes = require('./uploadRoutes');
+const vehicleRoutes = require('./vehicleRoutes');
 
 const router = express.Router();
 
@@ -38,6 +39,9 @@ router.use('/search', searchRoutes);
 router.use('/reports', reportRoutes);
 router.use('/insights', insightRoutes);
 router.use('/uploads', uploadRoutes);
+
+// Tool: Vehicle Log & Mileage Tracker
+router.use('/vehicles', vehicleRoutes);
 
 // Health check endpoint
 router.get('/health', (req, res) => {

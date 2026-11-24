@@ -2,13 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../app/AuthContext';
 import { ORBIT_TOOLS } from '../../lib/constants';
-import { Wallet, BellRing, FileText, Shield, ArrowRight, Sparkles, Orbit, Compass, Zap } from 'lucide-react';
+import { Wallet, BellRing, FileText, Shield, ArrowRight, Sparkles, Orbit, Compass, Zap, Car } from 'lucide-react';
 import ParallaxCard from '../../components/parallax/ParallaxCard';
 import ParallaxSection from '../../components/parallax/ParallaxSection';
 import { motion } from 'framer-motion';
 
 const ICONS = {
   Wallet,
+  Car,
   BellRing,
   FileText,
   ShieldLock: Shield,
@@ -43,10 +44,10 @@ export const HubPage = () => {
             <div className="pt-2 flex items-center gap-4 text-xs font-bold text-zinc-500">
               <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                1 Module Active
+                2 Modules Active
               </span>
               <span>•</span>
-              <span className="text-zinc-400">3 Upcoming Enhancements</span>
+              <span className="text-zinc-400">2 Upcoming Enhancements</span>
             </div>
           </div>
         </div>

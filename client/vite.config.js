@@ -72,7 +72,24 @@ export default defineConfig({
             url: '/tools/expense-tracker/cash',
             icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
           },
+          {
+            name: 'Mileage tester',
+            short_name: 'Mileage Tester',
+            description: 'Calculate trip mileage and fuel efficiency',
+            url: '/tools/vehicle-log/mileage-tester',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
+          },
+          {
+            name: 'Log fuel',
+            short_name: 'Log Fuel',
+            description: 'Record a vehicle fuel fill-up',
+            url: '/tools/vehicle-log/fuel',
+            icons: [{ src: '/pwa-192x192.png', sizes: '192x192' }],
+          },
         ],
+      },
+      devOptions: {
+        enabled: true,
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],

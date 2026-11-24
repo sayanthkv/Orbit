@@ -13,14 +13,14 @@ export const OrbitLoader = ({
   };
 
   return (
-    <div className={`flex flex-col items-center justify-center gap-3.5 ${className}`}>
+    <div className={`flex flex-col items-center justify-center gap-2.5 ${className}`}>
       <div
         className={`loader ${sizeClasses[size] || 'loader-md'}`}
         role="status"
         aria-label="Loading"
       />
       {label && (
-        <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 tracking-wide font-display animate-pulse">
+        <p className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 tracking-wider font-display uppercase">
           {label}
         </p>
       )}

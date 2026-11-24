@@ -58,6 +58,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const quickLogin = async (email) => {
+    try {
+      const res = await api.post('/auth/quick-login', { email });
+      if (res.success && res.data?.user) {
+        if (res.data.token) {
+          localStorage.setItem('orbit_token', res.data.token);
+        }
+        localStorage.setItem(
+          'orbit_last_user',
+          JSON.stringify({ name: res.data.user.name, email: res.data.user.email })
+        );
+        setUser(res.data.user);
+        toast.success(res.message || `Welcome back, ${res.data.user.name}!`);
+        return { success: true, user: res.data.user };
+      }
+      return { success: false, message: res.message };
+    } catch (err) {
+      toast.error(err.message || 'Quick sign in failed');
+      return { success: false, message: err.message };
+    }
+  };
+
   const register = async (userData) => {
     try {
       const res = await api.post('/auth/register', userData);
@@ -111,6 +133,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         isAuthenticated: !!user,
         login,
+        quickLogin,
         register,
         logout,
         checkAuth,

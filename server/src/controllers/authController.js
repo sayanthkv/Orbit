@@ -108,6 +108,48 @@ const login = async (req, res, next) => {
   }
 };
 
+const quickLogin = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required for quick sign in.',
+      });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Account not found. Please log in with password.',
+      });
+    }
+
+    // Process catch-up on recurring transactions
+    await processRecurringRules(user._id);
+
+    const token = signToken(user._id);
+    res.cookie('token', token, getCookieOptions());
+
+    res.status(200).json({
+      success: true,
+      message: `Welcome back, ${user.name}!`,
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          createdAt: user.createdAt,
+        },
+        token,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id).select('-passwordHash');
@@ -202,6 +244,7 @@ const logout = (req, res) => {
 module.exports = {
   register,
   login,
+  quickLogin,
   getMe,
   updateProfile,
   logout,

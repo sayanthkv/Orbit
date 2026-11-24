@@ -22,9 +22,18 @@ const BudgetsPage = lazy(() => import('../features/expense-tracker/pages/Budgets
 const RecurringPage = lazy(() => import('../features/expense-tracker/pages/RecurringPage'));
 const GoalsPage = lazy(() => import('../features/expense-tracker/pages/GoalsPage'));
 
+// Vehicle Log & Mileage Tracker Feature Modules
+const VehicleLogLayout = lazy(() => import('../features/vehicle-log/VehicleLogLayout'));
+const VehicleOverviewPage = lazy(() => import('../features/vehicle-log/VehicleOverviewPage'));
+const MileageTesterPage = lazy(() => import('../features/vehicle-log/MileageTesterPage'));
+const FuelLogPage = lazy(() => import('../features/vehicle-log/FuelLogPage'));
+const ServiceLogPage = lazy(() => import('../features/vehicle-log/ServiceLogPage'));
+const DocumentsPage = lazy(() => import('../features/vehicle-log/DocumentsPage'));
+const VehicleAnalyticsPage = lazy(() => import('../features/vehicle-log/VehicleAnalyticsPage'));
+
 const PageLoader = () => (
-  <div className="flex-1 flex items-center justify-center min-h-[50vh]">
-    <Spinner size="lg" />
+  <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh]">
+    <div className="loader loader-lg" role="status" aria-label="Loading page" />
   </div>
 );
 
@@ -61,6 +70,16 @@ export const AppRouter = () => {
             <Route path="budgets" element={<BudgetsPage />} />
             <Route path="recurring" element={<RecurringPage />} />
             <Route path="goals" element={<GoalsPage />} />
+          </Route>
+
+          {/* Tool: Vehicle Log & Mileage Tracker (Modular plug-in layout & routes) */}
+          <Route path="/tools/vehicle-log" element={<VehicleLogLayout />}>
+            <Route index element={<VehicleOverviewPage />} />
+            <Route path="mileage-tester" element={<MileageTesterPage />} />
+            <Route path="fuel" element={<FuelLogPage />} />
+            <Route path="service" element={<ServiceLogPage />} />
+            <Route path="documents" element={<DocumentsPage />} />
+            <Route path="analytics" element={<VehicleAnalyticsPage />} />
           </Route>
 
           {/* Legacy redirects */}
