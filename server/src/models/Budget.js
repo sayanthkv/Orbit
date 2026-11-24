@@ -9,42 +9,26 @@ const budgetSchema = new mongoose.Schema(
       index: true,
     },
     category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Category',
-      required: [true, 'Category reference is required'],
+      type: String,
+      required: [true, 'Category is required'],
+      trim: true,
     },
-    monthlyLimit: {
+    amount: {
       type: Number,
-      required: [true, 'Monthly budget limit is required'],
-      min: [1, 'Budget limit must be at least 1'],
+      required: [true, 'Budget amount is required'],
+      min: [1, 'Budget amount must be at least 1'],
     },
-    month: {
-      type: Number,
-      required: [true, 'Month is required'],
-      min: 1,
-      max: 12,
-    },
-    year: {
-      type: Number,
-      required: [true, 'Year is required'],
-      min: 2000,
-      max: 2100,
+    period: {
+      type: String,
+      enum: ['monthly'],
+      default: 'monthly',
     },
   },
   {
     timestamps: true,
-    toJSON: {
-      transform: function (doc, ret) {
-        delete ret.__v;
-        return ret;
-      },
-    },
   }
 );
 
-// One budget per category per month per user
-budgetSchema.index({ user: 1, category: 1, month: 1, year: 1 }, { unique: true });
+budgetSchema.index({ user: 1, category: 1 }, { unique: true });
 
-const Budget = mongoose.model('Budget', budgetSchema);
-
-module.exports = Budget;
+module.exports = mongoose.model('Budget', budgetSchema);

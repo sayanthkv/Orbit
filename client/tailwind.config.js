@@ -7,6 +7,12 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
+        numbers: ['"JetBrains Mono"', 'monospace'],
+      },
       colors: {
         brand: {
           50: '#ecfdf5',
@@ -23,13 +29,18 @@ export default {
         },
         expense: {
           light: '#ffe4e6',
-          DEFAULT: '#f43f5e', // Rose
+          DEFAULT: '#f43f5e', // Rose / coral
           dark: '#be123c',
         },
         income: {
           light: '#d1fae5',
           DEFAULT: '#10b981', // Emerald
           dark: '#047857',
+        },
+        transfer: {
+          light: '#e0f2fe',
+          DEFAULT: '#0284c7', // Sky / Cyan
+          dark: '#0369a1',
         },
       },
     },

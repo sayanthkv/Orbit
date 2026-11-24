@@ -5,66 +5,36 @@ const accountSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'User reference is required'],
+      required: [true, 'Account user reference is required'],
       index: true,
     },
     name: {
       type: String,
       required: [true, 'Account name is required'],
       trim: true,
-      maxlength: [50, 'Account name cannot exceed 50 characters'],
-    },
-    bankName: {
-      type: String,
-      trim: true,
-      default: '',
-      maxlength: [50, 'Bank name cannot exceed 50 characters'],
-    },
-    accountNumber: {
-      type: String,
-      trim: true,
-      default: '',
-      maxlength: [20, 'Account number cannot exceed 20 characters'],
+      maxlength: [100, 'Account name cannot exceed 100 characters'],
     },
     type: {
       type: String,
-      enum: ['bank', 'cash', 'card', 'savings', 'wallet', 'loan', 'liability', 'other'],
-      default: 'bank',
+      enum: ['Savings', 'Current', 'Salary', 'Investment', 'Other'],
+      default: 'Savings',
     },
-    initialBalance: {
+    openingBalance: {
       type: Number,
+      required: [true, 'Opening balance is required'],
       default: 0,
     },
-    color: {
-      type: String,
-      default: '#10B981',
-      match: [/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Please provide a valid hex color code'],
-    },
-    icon: {
-      type: String,
-      default: 'Building',
-      trim: true,
-    },
-    isDefault: {
+    isArchived: {
       type: Boolean,
       default: false,
+      index: true,
     },
   },
   {
     timestamps: true,
-    toJSON: {
-      transform: function (doc, ret) {
-        delete ret.__v;
-        return ret;
-      },
-    },
   }
 );
 
-// Indexes
-accountSchema.index({ user: 1, name: 1 });
-accountSchema.index({ user: 1, isDefault: 1 });
+accountSchema.index({ user: 1, isArchived: 1, name: 1 });
 
-const Account = mongoose.model('Account', accountSchema);
-
-module.exports = Account;
+module.exports = mongoose.model('Account', accountSchema);

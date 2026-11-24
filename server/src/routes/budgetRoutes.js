@@ -1,18 +1,21 @@
 const express = require('express');
 const router = express.Router();
+const { requireAuth } = require('../middleware/auth');
+const { validate } = require('../middleware/validate');
+const { budgetSchema } = require('../validators/budgetValidator');
 const {
   getBudgets,
   setBudget,
   deleteBudget,
 } = require('../controllers/budgetController');
-const { protect } = require('../middleware/auth');
-const validate = require('../middleware/validate');
-const { setBudgetSchema } = require('../validations/budgetValidation');
 
-router.use(protect);
+router.use(requireAuth);
 
-router.get('/', getBudgets);
-router.post('/', validate(setBudgetSchema), setBudget);
-router.delete('/:id', deleteBudget);
+router.route('/')
+  .get(getBudgets)
+  .post(validate(budgetSchema), setBudget);
+
+router.route('/:id')
+  .delete(deleteBudget);
 
 module.exports = router;

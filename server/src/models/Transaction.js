@@ -8,11 +8,19 @@ const transactionSchema = new mongoose.Schema(
       required: [true, 'User reference is required'],
       index: true,
     },
+    account: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Account',
+      required: [true, 'Account reference is required'],
+      index: true,
+    },
     type: {
       type: String,
-      enum: ['expense', 'income', 'transfer'],
+      enum: {
+        values: ['income', 'expense'],
+        message: 'Transaction type must be income or expense',
+      },
       required: [true, 'Transaction type is required'],
-      index: true,
     },
     amount: {
       type: Number,
@@ -20,73 +28,47 @@ const transactionSchema = new mongoose.Schema(
       min: [0.01, 'Amount must be greater than zero'],
     },
     category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Category',
-      required: function () {
-        return this.type !== 'transfer';
-      },
-      index: true,
+      type: String,
+      required: [true, 'Category is required'],
+      trim: true,
     },
     date: {
       type: Date,
-      required: [true, 'Transaction date is required'],
+      required: [true, 'Date is required'],
       default: Date.now,
-      index: true,
     },
     note: {
       type: String,
-      trim: true,
-      maxlength: [250, 'Note cannot exceed 250 characters'],
       default: '',
-    },
-    paymentMethod: {
-      type: String,
-      enum: ['cash', 'UPI', 'card', 'bank'],
-      default: 'bank',
-    },
-    account: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Account',
-      index: true,
-    },
-    toAccount: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Account',
-      index: true,
-    },
-    recurringRule: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Recurring',
-      index: true,
+      trim: true,
+      maxlength: [500, 'Note cannot exceed 500 characters'],
     },
     tags: [
       {
         type: String,
         trim: true,
-        lowercase: true,
       },
     ],
+    attachment: {
+      url: { type: String, default: null },
+      publicId: { type: String, default: null },
+      fileType: { type: String, default: null },
+    },
+    recurringRuleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'RecurringRule',
+      default: null,
+    },
   },
   {
     timestamps: true,
-    toJSON: {
-      transform: function (doc, ret) {
-        delete ret.__v;
-        return ret;
-      },
-    },
   }
 );
 
-// Indexes for fast aggregation and querying
 transactionSchema.index({ user: 1, date: -1 });
-transactionSchema.index({ user: 1, type: 1, date: -1 });
-transactionSchema.index({ user: 1, category: 1, date: -1 });
 transactionSchema.index({ user: 1, account: 1, date: -1 });
-transactionSchema.index({ user: 1, toAccount: 1, date: -1 });
+transactionSchema.index({ user: 1, category: 1 });
 transactionSchema.index({ user: 1, tags: 1 });
-transactionSchema.index({ note: 'text' });
+transactionSchema.index({ note: 'text', tags: 'text' });
 
-const Transaction = mongoose.model('Transaction', transactionSchema);
-
-module.exports = Transaction;
+module.exports = mongoose.model('Transaction', transactionSchema);

@@ -1,123 +1,97 @@
+const mongoose = require('mongoose');
 const Budget = require('../models/Budget');
 const Transaction = require('../models/Transaction');
-const Category = require('../models/Category');
+const CashTransaction = require('../models/CashTransaction');
 
-// @desc    Get monthly category budgets with actual spending and 80%/100% warning flags
-// @route   GET /api/budgets
-// @access  Private
+// GET /api/budgets - Get user's budgets with spent calculations for a month
 const getBudgets = async (req, res, next) => {
   try {
+    const { month, year } = req.query;
     const now = new Date();
-    const month = parseInt(req.query.month, 10) || now.getMonth() + 1;
-    const year = parseInt(req.query.year, 10) || now.getFullYear();
+    const selMonth = month ? Number(month) : now.getUTCMonth() + 1;
+    const selYear = year ? Number(year) : now.getUTCFullYear();
 
-    const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
-    const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+    const start = new Date(Date.UTC(selYear, selMonth - 1, 1));
+    const end = new Date(Date.UTC(selYear, selMonth, 0, 23, 59, 59, 999));
 
-    // 1. Fetch user's budgets for this month/year
-    const budgets = await Budget.find({
-      user: req.user._id,
-      month,
-      year,
-    }).populate('category', 'name icon color type isDefault');
+    const budgets = await Budget.find({ user: req.user._id }).sort({ category: 1 }).lean();
 
-    // 2. Aggregate spending per category for this month
-    const categorySpending = await Transaction.aggregate([
+    // Aggregate bank expenses by category
+    const bankExpenses = await Transaction.aggregate([
       {
         $match: {
-          user: req.user._id,
+          user: new mongoose.Types.ObjectId(req.user._id),
           type: 'expense',
-          date: { $gte: startDate, $lte: endDate },
+          date: { $gte: start, $lte: end },
         },
       },
       {
         $group: {
           _id: '$category',
-          spent: { $sum: '$amount' },
+          total: { $sum: '$amount' },
         },
       },
     ]);
 
-    const spendingMap = {};
-    categorySpending.forEach((cs) => {
-      spendingMap[cs._id.toString()] = cs.spent;
-    });
+    // Aggregate cash expenses by category
+    const cashExpenses = await CashTransaction.aggregate([
+      {
+        $match: {
+          user: new mongoose.Types.ObjectId(req.user._id),
+          type: 'expense',
+          date: { $gte: start, $lte: end },
+        },
+      },
+      {
+        $group: {
+          _id: '$category',
+          total: { $sum: '$amount' },
+        },
+      },
+    ]);
 
-    let totalBudgetLimit = 0;
-    let totalBudgetSpent = 0;
+    const spentMap = {};
+    for (const item of bankExpenses) {
+      spentMap[item._id] = (spentMap[item._id] || 0) + item.total;
+    }
+    for (const item of cashExpenses) {
+      spentMap[item._id] = (spentMap[item._id] || 0) + item.total;
+    }
 
-    const enrichedBudgets = budgets.map((b) => {
-      const catId = b.category?._id?.toString() || b.category?.toString();
-      const spent = spendingMap[catId] || 0;
-      const percentage = Math.round((spent / b.monthlyLimit) * 100);
-      const remaining = Math.max(0, b.monthlyLimit - spent);
-      const isExceeded = spent >= b.monthlyLimit; // 100%+
-      const isWarning = spent >= b.monthlyLimit * 0.8 && !isExceeded; // 80%-99%
+    let totalBudget = 0;
+    let totalSpent = 0;
 
-      totalBudgetLimit += b.monthlyLimit;
-      totalBudgetSpent += spent;
+    const data = budgets.map((b) => {
+      const spent = spentMap[b.category] || 0;
+      const percentage = b.amount > 0 ? (spent / b.amount) * 100 : 0;
+      let status = 'normal';
+      if (percentage >= 100) status = 'danger';
+      else if (percentage >= 80) status = 'warning';
+
+      totalBudget += b.amount;
+      totalSpent += spent;
 
       return {
         _id: b._id,
         category: b.category,
-        monthlyLimit: b.monthlyLimit,
-        month: b.month,
-        year: b.year,
+        amount: b.amount,
         spent,
-        remaining,
-        percentage,
-        isWarning,
-        isExceeded,
-        isHealthy: !isWarning && !isExceeded,
+        remaining: Math.max(0, b.amount - spent),
+        percentage: Number(percentage.toFixed(1)),
+        status,
+        createdAt: b.createdAt,
       };
     });
-
-    // Sort: exceeded first, then warning, then healthy
-    enrichedBudgets.sort((a, b) => b.percentage - a.percentage);
-
-    const warningsCount = enrichedBudgets.filter((b) => b.isWarning).length;
-    const exceededCount = enrichedBudgets.filter((b) => b.isExceeded).length;
-
-    const alerts = enrichedBudgets
-      .filter((b) => b.isWarning || b.isExceeded)
-      .map((b) => ({
-        id: b._id,
-        category: b.category?.name || 'Category',
-        type: b.isExceeded ? 'danger' : 'warning',
-        percentage: b.percentage,
-        spent: b.spent,
-        monthlyLimit: b.monthlyLimit,
-        message: b.isExceeded
-          ? `${b.category?.name || 'Category'} budget exceeded (${b.percentage}% spent)`
-          : `${b.category?.name || 'Category'} reached ${b.percentage}% (≥80%) of budget limit`,
-      }));
-
-    const totalDaysInMonth = new Date(year, month, 0).getDate();
-    const isCurrentMonth = month === (now.getMonth() + 1) && year === now.getFullYear();
-    const daysRemaining = isCurrentMonth ? Math.max(1, totalDaysInMonth - now.getDate() + 1) : totalDaysInMonth;
-    const remainingBudget = Math.max(0, totalBudgetLimit - totalBudgetSpent);
-    const safeToSpendDaily = daysRemaining > 0 ? Math.round((remainingBudget / daysRemaining) * 100) / 100 : 0;
 
     res.status(200).json({
       success: true,
       data: {
-        month,
-        year,
-        budgets: enrichedBudgets,
-        overview: {
-          totalLimit: totalBudgetLimit,
-          totalSpent: totalBudgetSpent,
-          totalRemaining: Math.max(0, totalBudgetLimit - totalBudgetSpent),
-          overallPercentage:
-            totalBudgetLimit > 0
-              ? Math.round((totalBudgetSpent / totalBudgetLimit) * 100)
-              : 0,
-          warningsCount,
-          exceededCount,
-          alerts,
-          safeToSpendDaily,
-          daysRemaining,
-        },
+        month: selMonth,
+        year: selYear,
+        budgets: data,
+        totalBudget,
+        totalSpent,
+        totalPercentage: totalBudget > 0 ? Number(((totalSpent / totalBudget) * 100).toFixed(1)) : 0,
       },
     });
   } catch (error) {
@@ -125,73 +99,43 @@ const getBudgets = async (req, res, next) => {
   }
 };
 
-// @desc    Set or update a monthly budget
-// @route   POST /api/budgets
-// @access  Private
+// POST /api/budgets - Set or update budget for a category
 const setBudget = async (req, res, next) => {
   try {
-    const { category: categoryId, monthlyLimit, month, year } = req.body;
-
-    const category = await Category.findOne({
-      _id: categoryId,
-      $or: [{ isDefault: true }, { user: req.user._id }],
-    });
-
-    if (!category) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid category specified for budget.',
-      });
-    }
+    const { category, amount, period } = req.body;
 
     const budget = await Budget.findOneAndUpdate(
-      {
-        user: req.user._id,
-        category: category._id,
-        month,
-        year,
-      },
-      {
-        monthlyLimit,
-      },
-      {
-        new: true,
-        upsert: true,
-        runValidators: true,
-      }
-    ).populate('category', 'name icon color type isDefault');
+      { user: req.user._id, category: category.trim() },
+      { amount, period: period || 'monthly' },
+      { upsert: true, new: true, runValidators: true }
+    );
 
     res.status(200).json({
       success: true,
-      message: `Budget of ₹${monthlyLimit} set for ${category.name}.`,
-      data: budget,
+      message: 'Budget saved successfully',
+      data: { budget },
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Delete a budget
-// @route   DELETE /api/budgets/:id
-// @access  Private
+// DELETE /api/budgets/:id - Delete a budget
 const deleteBudget = async (req, res, next) => {
   try {
-    const budget = await Budget.findOneAndDelete({
-      _id: req.params.id,
-      user: req.user._id,
-    });
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid budget ID' });
+    }
 
+    const budget = await Budget.findOneAndDelete({ _id: id, user: req.user._id });
     if (!budget) {
-      return res.status(404).json({
-        success: false,
-        message: 'Budget record not found.',
-      });
+      return res.status(404).json({ success: false, message: 'Budget not found' });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Budget removed successfully.',
-      data: { id: req.params.id },
+      message: 'Budget deleted successfully',
     });
   } catch (error) {
     next(error);

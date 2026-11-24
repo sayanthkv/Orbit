@@ -1,23 +1,23 @@
 const express = require('express');
 const router = express.Router();
+const { requireAuth } = require('../middleware/auth');
+const { validate } = require('../middleware/validate');
+const { categorySchema } = require('../validators/categoryValidator');
 const {
   getCategories,
   createCategory,
   updateCategory,
   deleteCategory,
 } = require('../controllers/categoryController');
-const { protect } = require('../middleware/auth');
-const validate = require('../middleware/validate');
-const {
-  createCategorySchema,
-  updateCategorySchema,
-} = require('../validations/categoryValidation');
 
-router.use(protect);
+router.use(requireAuth);
 
-router.get('/', getCategories);
-router.post('/', validate(createCategorySchema), createCategory);
-router.put('/:id', validate(updateCategorySchema), updateCategory);
-router.delete('/:id', deleteCategory);
+router.route('/')
+  .get(getCategories)
+  .post(validate(categorySchema), createCategory);
+
+router.route('/:id')
+  .put(updateCategory)
+  .delete(deleteCategory);
 
 module.exports = router;

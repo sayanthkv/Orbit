@@ -1,41 +1,26 @@
 const errorHandler = (err, req, res, next) => {
-  console.error('💥 Error caught in handler:', err);
-
   let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   let message = err.message || 'Internal Server Error';
-  let errors = null;
+  let errors = err.errors;
 
-  // Handle Mongoose duplicate key error
+  if (err.name === 'CastError' && err.kind === 'ObjectId') {
+    statusCode = 404;
+    message = 'Resource not found with the specified ID.';
+  }
+
   if (err.code === 11000) {
     statusCode = 400;
-    const field = Object.keys(err.keyValue)[0];
+    const field = Object.keys(err.keyValue || {})[0] || 'field';
     message = `An entry with this ${field} already exists.`;
   }
 
-  // Handle Mongoose CastError (invalid ObjectId)
-  if (err.name === 'CastError') {
-    statusCode = 400;
-    message = `Invalid ID format for ${err.path}`;
-  }
-
-  // Handle Mongoose ValidationError
   if (err.name === 'ValidationError') {
     statusCode = 400;
-    errors = Object.values(err.errors).map((val) => ({
-      field: val.path,
-      message: val.message,
+    errors = Object.values(err.errors).map((e) => ({
+      field: e.path,
+      message: e.message,
     }));
-    message = errors[0]?.message || 'Validation failed';
-  }
-
-  // Handle JWT errors
-  if (err.name === 'JsonWebTokenError') {
-    statusCode = 401;
-    message = 'Invalid authentication token. Please log in again.';
-  }
-  if (err.name === 'TokenExpiredError') {
-    statusCode = 401;
-    message = 'Authentication token expired. Please log in again.';
+    message = errors[0]?.message || 'Validation error';
   }
 
   res.status(statusCode).json({

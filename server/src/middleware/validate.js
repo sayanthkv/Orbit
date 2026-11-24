@@ -1,20 +1,17 @@
 const validate = (schema) => (req, res, next) => {
   try {
-    schema.parse({
-      body: req.body,
-      query: req.query,
-      params: req.params,
-    });
+    const parsed = schema.parse(req.body);
+    req.body = parsed;
     next();
   } catch (error) {
     if (error.errors) {
       const formattedErrors = error.errors.map((err) => ({
-        field: err.path.slice(1).join('.'),
+        field: err.path.join('.'),
         message: err.message,
       }));
       return res.status(400).json({
         success: false,
-        message: formattedErrors[0]?.message || 'Validation error',
+        message: formattedErrors[0]?.message || 'Validation failed',
         errors: formattedErrors,
       });
     }
@@ -22,4 +19,5 @@ const validate = (schema) => (req, res, next) => {
   }
 };
 
+validate.validate = validate;
 module.exports = validate;

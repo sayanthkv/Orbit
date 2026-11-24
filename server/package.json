@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -19,7 +20,9 @@
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.12.1",
+    "multer": "^2.5.0",
     "node-cron": "^3.0.3",
+    "pdfkit": "^0.21.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {

@@ -1,165 +1,185 @@
+const mongoose = require('mongoose');
 const Category = require('../models/Category');
 const Transaction = require('../models/Transaction');
+const CashTransaction = require('../models/CashTransaction');
+const Budget = require('../models/Budget');
+const { seedDefaultCategories } = require('../utils/categorySeeder');
 
-// @desc    Get all accessible categories (default + user's custom)
-// @route   GET /api/categories
-// @access  Private
+// GET /api/categories - List user categories (ensure defaults are seeded)
 const getCategories = async (req, res, next) => {
   try {
-    const { type } = req.query;
-    const filter = {
-      $or: [{ isDefault: true }, { user: req.user._id }],
-    };
+    // Seed defaults if empty
+    await seedDefaultCategories(req.user._id);
 
-    if (type && ['expense', 'income'].includes(type)) {
-      filter.type = type;
-    }
+    const { type, includeHidden } = req.query;
+    const query = { user: req.user._id };
+    if (type) query.type = type;
+    if (includeHidden !== 'true') query.isHidden = false;
 
-    const categories = await Category.find(filter).sort({ isDefault: -1, name: 1 });
+    const categories = await Category.find(query).sort({ isDefault: -1, name: 1 }).lean();
 
     res.status(200).json({
       success: true,
-      message: 'Categories retrieved successfully.',
-      data: categories,
+      data: { categories },
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Create a custom category
-// @route   POST /api/categories
-// @access  Private
+// POST /api/categories - Create custom category
 const createCategory = async (req, res, next) => {
   try {
-    const { name, icon, color, type } = req.body;
+    const { name, type, color, icon } = req.body;
 
-    // Check if category already exists for this user (or as default)
     const existing = await Category.findOne({
+      user: req.user._id,
       name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
       type,
-      $or: [{ isDefault: true }, { user: req.user._id }],
     });
 
     if (existing) {
       return res.status(400).json({
         success: false,
-        message: `A ${type} category named "${name}" already exists.`,
+        message: `A ${type} category with the name "${name.trim()}" already exists`,
       });
     }
 
     const category = await Category.create({
       user: req.user._id,
       name: name.trim(),
-      icon: icon || 'Tag',
-      color: color || '#10B981',
       type,
+      color: color || '#10b981',
+      icon: icon || 'Tag',
       isDefault: false,
+      isHidden: false,
     });
 
     res.status(201).json({
       success: true,
-      message: 'Custom category created successfully.',
-      data: category,
+      message: 'Category created successfully',
+      data: { category },
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Update a custom category
-// @route   PUT /api/categories/:id
-// @access  Private
+// PUT /api/categories/:id - Update custom category
 const updateCategory = async (req, res, next) => {
   try {
-    const category = await Category.findById(req.params.id);
+    const { id } = req.params;
+    const { name, color, icon, isHidden } = req.body;
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid category ID' });
+    }
+
+    const category = await Category.findOne({ _id: id, user: req.user._id });
     if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: 'Category not found.',
-      });
+      return res.status(404).json({ success: false, message: 'Category not found' });
     }
 
-    if (category.isDefault) {
-      return res.status(403).json({
-        success: false,
-        message: 'System default categories cannot be modified.',
-      });
+    const oldName = category.name;
+
+    if (name && name.trim() !== oldName) {
+      // If default category, user can rename custom ones or hide defaults, but changing name of default should be guarded or permitted
+      const newName = name.trim();
+      category.name = newName;
+
+      // Update name in all user's transactions & budgets
+      await Promise.all([
+        Transaction.updateMany({ user: req.user._id, category: oldName }, { category: newName }),
+        CashTransaction.updateMany({ user: req.user._id, category: oldName }, { category: newName }),
+        Budget.updateMany({ user: req.user._id, category: oldName }, { category: newName }),
+      ]);
     }
 
-    if (category.user?.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to update this category.',
-      });
-    }
-
-    const { name, icon, color, type } = req.body;
-    if (name) category.name = name.trim();
-    if (icon) category.icon = icon;
     if (color) category.color = color;
-    if (type) category.type = type;
+    if (icon) category.icon = icon;
+    if (isHidden !== undefined) category.isHidden = isHidden;
 
     await category.save();
 
     res.status(200).json({
       success: true,
-      message: 'Category updated successfully.',
-      data: category,
+      message: 'Category updated successfully',
+      data: { category },
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Delete a custom category
-// @route   DELETE /api/categories/:id
-// @access  Private
+// DELETE /api/categories/:id - Delete category with mandatory reassignment if in use
 const deleteCategory = async (req, res, next) => {
   try {
-    const category = await Category.findById(req.params.id);
+    const { id } = req.params;
+    const { reassignTo } = req.body; // Replacement category name
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid category ID' });
+    }
+
+    const category = await Category.findOne({ _id: id, user: req.user._id });
     if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: 'Category not found.',
-      });
+      return res.status(404).json({ success: false, message: 'Category not found' });
     }
 
     if (category.isDefault) {
-      return res.status(403).json({
-        success: false,
-        message: 'System default categories cannot be deleted.',
-      });
-    }
-
-    if (category.user?.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to delete this category.',
-      });
-    }
-
-    // Check if any transactions are currently linked to this category
-    const transactionCount = await Transaction.countDocuments({
-      user: req.user._id,
-      category: category._id,
-    });
-
-    if (transactionCount > 0) {
       return res.status(400).json({
         success: false,
-        message: `Cannot delete category: ${transactionCount} existing transaction(s) are linked to it. Please reassign or delete those transactions first.`,
+        message: 'Default system categories cannot be deleted. You can hide them instead.',
       });
     }
 
-    await Category.findByIdAndDelete(category._id);
+    // Check usage count in transactions & budgets
+    const [txCount, cashTxCount, budgetCount] = await Promise.all([
+      Transaction.countDocuments({ user: req.user._id, category: category.name }),
+      CashTransaction.countDocuments({ user: req.user._id, category: category.name }),
+      Budget.countDocuments({ user: req.user._id, category: category.name }),
+    ]);
+
+    const totalUsage = txCount + cashTxCount + budgetCount;
+
+    if (totalUsage > 0) {
+      if (!reassignTo || !reassignTo.trim()) {
+        return res.status(400).json({
+          success: false,
+          requiresReassignment: true,
+          message: `Category is used in ${totalUsage} records. Please select a replacement category to reassign them before deleting.`,
+        });
+      }
+
+      const replacementTarget = reassignTo.trim();
+
+      // Verify replacement exists
+      const targetCat = await Category.findOne({
+        user: req.user._id,
+        name: replacementTarget,
+        type: category.type,
+      });
+
+      if (!targetCat) {
+        return res.status(400).json({
+          success: false,
+          message: `Replacement category "${replacementTarget}" not found`,
+        });
+      }
+
+      // Reassign all records
+      await Promise.all([
+        Transaction.updateMany({ user: req.user._id, category: category.name }, { category: replacementTarget }),
+        CashTransaction.updateMany({ user: req.user._id, category: category.name }, { category: replacementTarget }),
+        Budget.updateMany({ user: req.user._id, category: category.name }, { category: replacementTarget }),
+      ]);
+    }
+
+    await Category.deleteOne({ _id: id });
 
     res.status(200).json({
       success: true,
-      message: 'Category deleted successfully.',
-      data: { id: category._id },
+      message: 'Category deleted and records reassigned successfully',
     });
   } catch (error) {
     next(error);

@@ -3,17 +3,21 @@ const User = require('../models/User');
 
 const protect = async (req, res, next) => {
   try {
-    let token = req.cookies?.token;
+    let token = null;
 
-    // Also support Authorization header for flexibility
-    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    if (req.cookies && req.cookies.token) {
+      token = req.cookies.token;
+    } else if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer ')
+    ) {
       token = req.headers.authorization.split(' ')[1];
     }
 
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Not authorized. Please log in to access this resource.',
+        message: 'Authentication required. Please log in.',
       });
     }
 
@@ -26,18 +30,24 @@ const protect = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'The user belonging to this token no longer exists.',
+        message: 'Account not found. Please log in again.',
       });
     }
 
     req.user = user;
     next();
   } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Session expired. Please log in again.',
+      });
+    }
     return res.status(401).json({
       success: false,
-      message: 'Not authorized or token expired.',
+      message: 'Invalid session. Please log in again.',
     });
   }
 };
 
-module.exports = { protect };
+module.exports = { protect, requireAuth: protect };

@@ -1,27 +1,26 @@
 const express = require('express');
 const router = express.Router();
+const { requireAuth } = require('../middleware/auth');
+const { validate } = require('../middleware/validate');
+const { recurringRuleSchema } = require('../validators/recurringValidator');
 const {
   getRecurringRules,
   createRecurringRule,
   updateRecurringRule,
+  toggleRecurringRule,
   deleteRecurringRule,
-  triggerProcess,
-  runRuleNow,
 } = require('../controllers/recurringController');
-const { protect } = require('../middleware/auth');
-const validate = require('../middleware/validate');
-const {
-  createRecurringSchema,
-  updateRecurringSchema,
-} = require('../validations/recurringValidation');
 
-router.use(protect);
+router.use(requireAuth);
 
-router.get('/', getRecurringRules);
-router.post('/', validate(createRecurringSchema), createRecurringRule);
-router.put('/:id', validate(updateRecurringSchema), updateRecurringRule);
-router.delete('/:id', deleteRecurringRule);
-router.post('/process', triggerProcess);
-router.post('/:id/run', runRuleNow);
+router.route('/')
+  .get(getRecurringRules)
+  .post(validate(recurringRuleSchema), createRecurringRule);
+
+router.route('/:id')
+  .put(validate(recurringRuleSchema), updateRecurringRule)
+  .delete(deleteRecurringRule);
+
+router.patch('/:id/toggle', toggleRecurringRule);
 
 module.exports = router;
