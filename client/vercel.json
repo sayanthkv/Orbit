@@ -5,7 +5,7 @@
       "destination": "https://orbit-3st8.onrender.com/api/:path*"
     },
     {
-      "source": "/((?!assets/|pwa-.*|apple-touch-icon.*|maskable-icon.*|logo\\.svg|favicon\\.png|manifest\\.webmanifest|sw\\.js|workbox-.*).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],

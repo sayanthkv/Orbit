@@ -223,7 +223,7 @@ export const LoginPage = () => {
           )}
 
           {/* Security badge & Register link */}
-          <div className="pt-2 border-t border-zinc-100 dark:border-white/6 text-center space-y-3">
+          <div className="pt-2 text-center space-y-3">
             <div className="flex items-center justify-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>Secure 256-bit encrypted authentication</span>
