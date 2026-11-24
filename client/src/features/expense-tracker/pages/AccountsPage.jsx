@@ -71,6 +71,9 @@ export const AccountsPage = () => {
 
   useEffect(() => {
     fetchAccounts();
+    const handleReconnect = () => fetchAccounts();
+    window.addEventListener('orbit:network-reconnected', handleReconnect);
+    return () => window.removeEventListener('orbit:network-reconnected', handleReconnect);
   }, [fetchAccounts]);
 
   const openCreateModal = () => {

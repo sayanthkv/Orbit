@@ -112,6 +112,12 @@ export const CashPage = () => {
   useEffect(() => {
     fetchCashData();
     fetchTransactions();
+    const handleReconnect = () => {
+      fetchCashData();
+      fetchTransactions();
+    };
+    window.addEventListener('orbit:network-reconnected', handleReconnect);
+    return () => window.removeEventListener('orbit:network-reconnected', handleReconnect);
   }, [fetchCashData, fetchTransactions]);
 
   const openAddModal = (defaultType = 'expense') => {

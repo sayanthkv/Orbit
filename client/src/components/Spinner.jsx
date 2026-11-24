@@ -1,16 +1,35 @@
 import React from 'react';
 
-export const Spinner = ({ size = 'md', className = '' }) => {
-  const sizes = {
+export const Spinner = ({ size = 'md', variant = 'orbit', className = '' }) => {
+  // Orbit Cosmic Liquid Metaball Loader
+  if (variant === 'orbit') {
+    const sizeClasses = {
+      sm: 'loader-sm',
+      md: 'loader-md',
+      lg: 'loader-lg',
+      xl: 'loader-xl',
+    };
+
+    return (
+      <div
+        className={`loader ${sizeClasses[size] || 'loader-md'} ${className}`}
+        role="status"
+        aria-label="Loading"
+      />
+    );
+  }
+
+  // Classic compact circular spinner for inline button states
+  const classicSizes = {
     sm: 'w-4 h-4 border-2',
     md: 'w-6 h-6 border-2',
-    lg: 'w-9 h-9 border-3',
+    lg: 'w-8 h-8 border-3',
   };
 
   return (
     <div
       className={`inline-block animate-spin rounded-full border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] ${
-        sizes[size] || sizes.md
+        classicSizes[size] || classicSizes.md
       } ${className}`}
       role="status"
     >

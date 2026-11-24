@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#09090b" />
+      <stop offset="100%" stop-color="#141418" />
+    </linearGradient>
+    <linearGradient id="planetGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="60%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.95" />
+      <stop offset="50%" stop-color="#06b6d4" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0.25" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Outer Orbital Atmospheric Track -->
+  <circle cx="256" cy="256" r="176" fill="none" stroke="#10b981" stroke-opacity="0.15" stroke-width="16" />
+  
+  <!-- Dynamic Orbital Ring -->
+  <circle cx="256" cy="256" r="176" fill="none" stroke="url(#ringGrad)" stroke-width="14" stroke-dasharray="720 280" stroke-linecap="round" transform="rotate(-30 256 256)" filter="url(#glow)" />
+
+  <!-- Core Celestial Sphere (Orbit Central Core) -->
+  <circle cx="256" cy="256" r="88" fill="url(#planetGrad)" filter="url(#glow)" />
+  <circle cx="230" cy="230" r="32" fill="#ffffff" fill-opacity="0.2" />
+
+  <!-- Orbiting Node / Satellite -->
+  <circle cx="396" cy="180" r="28" fill="#38bdf8" filter="url(#glow)" />
+  <circle cx="396" cy="180" r="14" fill="#ffffff" fill-opacity="0.85" />
+
+  <!-- Secondary Satellite Marker -->
+  <circle cx="116" cy="332" r="14" fill="#34d399" fill-opacity="0.9" />
+</svg>

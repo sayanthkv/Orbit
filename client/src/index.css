@@ -3,14 +3,24 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    /* Prevent accidental pull-to-refresh reload in standalone mobile app */
+    overscroll-behavior-y: contain;
+  }
+
   body {
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     @apply bg-zinc-50 text-zinc-900 dark:bg-[#09090b] dark:text-[#f4f4f5];
     -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
   }
 
   h1, h2, h3, h4, .font-heading {
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  input, textarea, [contenteditable="true"] {
+    user-select: text;
   }
 }
 
@@ -19,6 +29,14 @@
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .tabular-nums {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Safe area utilities */
+  .safe-pt {
+    padding-top: max(1rem, env(safe-area-inset-top, 0px));
+  }
+  .safe-pb {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -57,6 +75,46 @@ body.orbit-modal-open [data-orbit-bottom-nav] {
   pointer-events: none !important;
   visibility: hidden !important;
   z-index: -1 !important;
+}
+
+/* Standalone PWA environment rules */
+@media all and (display-mode: standalone) {
+  /* Prevent overscroll bounce on installed PWA screens */
+  body {
+    overscroll-behavior: none;
+  }
+}
+
+/* Orbit Cosmic Liquid Metaball Loader */
+.loader, .orbit-loader {
+  --loader-size: 72px;
+  width: var(--loader-size);
+  aspect-ratio: 1;
+  border: calc(var(--loader-size) * 0.125) solid #0000;
+  box-sizing: border-box;
+  background: 
+    radial-gradient(farthest-side, #34d399 98%, #0000) 0 0 / calc(var(--loader-size) * 0.25) calc(var(--loader-size) * 0.25),
+    radial-gradient(farthest-side, #10b981 98%, #0000) 100% 0 / calc(var(--loader-size) * 0.25) calc(var(--loader-size) * 0.25),
+    radial-gradient(farthest-side, #38bdf8 98%, #0000) 100% 100% / calc(var(--loader-size) * 0.25) calc(var(--loader-size) * 0.25),
+    radial-gradient(farthest-side, #10b981 98%, #0000) 0 100% / calc(var(--loader-size) * 0.25) calc(var(--loader-size) * 0.25),
+    linear-gradient(#059669 0 0) 50% / calc(var(--loader-size) * 0.5) calc(var(--loader-size) * 0.5),
+    #09090b;
+  background-repeat: no-repeat;
+  filter: blur(calc(var(--loader-size) * 0.05)) contrast(8) drop-shadow(0 0 14px rgba(16, 185, 129, 0.45));
+  border-radius: 18px;
+  animation: l12 0.85s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-block;
+}
+
+.loader.loader-sm { --loader-size: 32px; border-radius: 8px; }
+.loader.loader-md { --loader-size: 54px; border-radius: 14px; }
+.loader.loader-lg { --loader-size: 76px; border-radius: 20px; }
+.loader.loader-xl { --loader-size: 96px; border-radius: 24px; }
+
+@keyframes l12 {
+  100% {
+    background-position: 100% 0, 100% 100%, 0 100%, 0 0, center;
+  }
 }
 
 /* Respect prefers-reduced-motion */

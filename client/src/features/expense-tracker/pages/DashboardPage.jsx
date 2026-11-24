@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../../../lib/api';
 import { formatCurrency, formatCompactCurrency } from '../../../lib/formatters';
 import AnimatedCounter from '../../../components/AnimatedCounter';
@@ -13,6 +13,7 @@ import MonthlyReportModal from '../../../components/MonthlyReportModal';
 import ParallaxSection from '../../../components/parallax/ParallaxSection';
 import ParallaxCard from '../../../components/parallax/ParallaxCard';
 import { useToast } from '../../../components/Toast';
+import { useNetworkStatus } from '../../../hooks/useNetworkStatus';
 import {
   Landmark,
   Banknote,
@@ -77,9 +78,37 @@ export const DashboardPage = () => {
   const [quickAttachment, setQuickAttachment] = useState(null);
   const [isQuickSubmitting, setIsQuickSubmitting] = useState(false);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { isOnline } = useNetworkStatus();
+
   // Modals
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+
+  // Listen to deep-linked PWA shortcuts (?action=add-expense or ?action=add-income)
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action === 'add-expense') {
+      setQuickTab('expense');
+      setIsQuickAddOpen(true);
+      searchParams.delete('action');
+      setSearchParams(searchParams, { replace: true });
+    } else if (action === 'add-income') {
+      setQuickTab('income');
+      setIsQuickAddOpen(true);
+      searchParams.delete('action');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  // Refetch when coming back online
+  useEffect(() => {
+    const handleReconnect = () => {
+      fetchSummary();
+    };
+    window.addEventListener('orbit:network-reconnected', handleReconnect);
+    return () => window.removeEventListener('orbit:network-reconnected', handleReconnect);
+  }, []);
 
   const fetchSummary = useCallback(async () => {
     try {
@@ -156,6 +185,10 @@ export const DashboardPage = () => {
 
   const handleQuickTxSubmit = async (e) => {
     e.preventDefault();
+    if (!isOnline) {
+      toast.error("You're offline. Please reconnect to submit transactions.");
+      return;
+    }
     const numAmount = Number(quickAmount);
     if (!numAmount || numAmount <= 0) {
       toast.error('Enter a valid amount');
@@ -998,12 +1031,23 @@ export const DashboardPage = () => {
             />
           )}
 
+          {!isOnline && (
+            <p className="text-[11px] text-amber-500 font-semibold text-center pb-1">
+              Offline mode: Form details are preserved, but saving requires network connection.
+            </p>
+          )}
+
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => setIsQuickAddOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" isLoading={isQuickSubmitting}>
-              Record Entry
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!isOnline || isQuickSubmitting}
+              isLoading={isQuickSubmitting}
+            >
+              {!isOnline ? 'Offline' : 'Record Entry'}
             </Button>
           </div>
         </form>

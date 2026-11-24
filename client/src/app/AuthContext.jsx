@@ -85,6 +85,21 @@ export const AuthProvider = ({ children }) => {
       await api.post('/auth/logout');
     } catch {}
     localStorage.removeItem('orbit_token');
+
+    // Clear runtime API caches so a shared device never shows previous user data
+    if (typeof window !== 'undefined' && 'caches' in window) {
+      try {
+        const cacheKeys = await window.caches.keys();
+        await Promise.all(
+          cacheKeys
+            .filter((key) => key.includes('orbit') || key.includes('api'))
+            .map((key) => window.caches.delete(key))
+        );
+      } catch (err) {
+        console.warn('Cache clearing on logout:', err);
+      }
+    }
+
     setUser(null);
     toast.info('You have been logged out.');
   };

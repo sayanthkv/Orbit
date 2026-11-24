@@ -7,6 +7,9 @@ import GlobalSearchModal from '../components/GlobalSearchModal';
 import MonthlyReportModal from '../components/MonthlyReportModal';
 import ScrollProgressIndicator from '../components/parallax/ScrollProgressIndicator';
 import ParallaxBackground from '../components/parallax/ParallaxBackground';
+import OfflineBanner from '../components/pwa/OfflineBanner';
+import InstallPrompt from '../components/pwa/InstallPrompt';
+import ReloadPrompt from '../components/pwa/ReloadPrompt';
 
 export const AppLayout = () => {
   const { user, logout } = useAuth();
@@ -176,7 +179,10 @@ export const AppLayout = () => {
         <Outlet />
       </main>
 
-      {/* Global Modals */}
+      {/* Global Modals & PWA Banners */}
+      <OfflineBanner />
+      <InstallPrompt />
+      <ReloadPrompt />
       <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
       <MonthlyReportModal isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} />
     </div>

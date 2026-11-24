@@ -1,6 +1,11 @@
 import axios from 'axios';
 
 const getBaseUrl = () => {
+  // In production, always use relative '/api' so Vercel proxies it as same-origin,
+  // preventing iOS Safari cross-site cookie restrictions in installed PWAs.
+  if (import.meta.env.PROD) {
+    return '/api';
+  }
   const envUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
   if (!envUrl) return '/api';
   const cleanUrl = envUrl.trim().replace(/\/+$/, '');

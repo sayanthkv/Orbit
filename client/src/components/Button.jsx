@@ -46,7 +46,7 @@ export const Button = ({
     >
       {isLoading ? (
         <>
-          <Spinner size="sm" className="mr-1.5" />
+          <Spinner size="sm" variant="classic" className="mr-1.5" />
           <span>Loading...</span>
         </>
       ) : (
