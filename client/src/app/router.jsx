@@ -8,6 +8,7 @@ import Spinner from '../components/Spinner';
 const LoginPage = lazy(() => import('../features/auth/LoginPage'));
 const RegisterPage = lazy(() => import('../features/auth/RegisterPage'));
 const HubPage = lazy(() => import('../features/hub/HubPage'));
+const ProfilePage = lazy(() => import('../features/profile/ProfilePage'));
 
 // Expense Tracker Feature Modules
 const ExpenseTrackerLayout = lazy(() => import('../features/expense-tracker/ExpenseTrackerLayout'));
@@ -45,6 +46,9 @@ export const AppRouter = () => {
         >
           {/* Hub Home (Multi-tool launcher) */}
           <Route path="/" element={<HubPage />} />
+
+          {/* User Profile Section */}
+          <Route path="/profile" element={<ProfilePage />} />
 
           {/* Tool: Expense Tracker (Modular plug-in layout & routes) */}
           <Route path="/tools/expense-tracker" element={<ExpenseTrackerLayout />}>

@@ -1,45 +1,46 @@
-import React, { useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useRef } from 'react';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
 export const ParallaxCard = ({
   children,
   className = '',
-  depth = 12,
+  depth = 10,
   interactive = true,
   onClick,
 }) => {
   const cardRef = useRef(null);
-  const [rotateX, setRotateX] = useState(0);
-  const [rotateY, setRotateY] = useState(0);
-  const [glarePosition, setGlarePosition] = useState({ x: 50, y: 50, opacity: 0 });
+
+  // Raw motion values operating completely outside the React render loop (0 component re-renders!)
+  const x = useMotionValue(0.5);
+  const y = useMotionValue(0.5);
+
+  // Smooth hardware-accelerated springs
+  const smoothX = useSpring(x, { stiffness: 280, damping: 22, mass: 0.4 });
+  const smoothY = useSpring(y, { stiffness: 280, damping: 22, mass: 0.4 });
+
+  const rotateX = useTransform(smoothY, [0, 1], [depth, -depth]);
+  const rotateY = useTransform(smoothX, [0, 1], [-depth, depth]);
+  const glareOpacity = useMotionValue(0);
 
   const handleMouseMove = (e) => {
     if (!interactive || !cardRef.current) return;
+    // Don't calculate tilt on touch screens or if reduced motion is preferred
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.matchMedia('(hover: none)').matches) return;
 
     const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const clientX = (e.clientX - rect.left) / rect.width;
+    const clientY = (e.clientY - rect.top) / rect.height;
 
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotX = ((y - centerY) / centerY) * -depth;
-    const rotY = ((x - centerX) / centerX) * depth;
-
-    setRotateX(rotX);
-    setRotateY(rotY);
-    setGlarePosition({
-      x: (x / rect.width) * 100,
-      y: (y / rect.height) * 100,
-      opacity: 0.15,
-    });
+    x.set(clientX);
+    y.set(clientY);
+    glareOpacity.set(0.12);
   };
 
   const handleMouseLeave = () => {
-    setRotateX(0);
-    setRotateY(0);
-    setGlarePosition((prev) => ({ ...prev, opacity: 0 }));
+    x.set(0.5);
+    y.set(0.5);
+    glareOpacity.set(0);
   };
 
   return (
@@ -48,33 +49,27 @@ export const ParallaxCard = ({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onClick={onClick}
-      animate={{
+      style={{
         rotateX,
         rotateY,
         transformPerspective: 1000,
-      }}
-      transition={{
-        type: 'spring',
-        stiffness: 300,
-        damping: 25,
-        mass: 0.5,
+        transformStyle: 'preserve-3d',
+        willChange: 'transform',
       }}
       className={`relative rounded-3xl overflow-hidden transition-shadow duration-300 ${className}`}
-      style={{
-        transformStyle: 'preserve-3d',
-      }}
     >
-      {/* Glare Sheen Reflection Layer */}
-      <div
-        className="pointer-events-none absolute inset-0 z-20 transition-opacity duration-300 rounded-3xl"
+      {/* Glare Sheen Reflection Layer (Pure GPU opacity transition) */}
+      <motion.div
+        className="pointer-events-none absolute inset-0 z-20 rounded-3xl transition-opacity duration-300"
         style={{
-          opacity: glarePosition.opacity,
-          background: `radial-gradient(circle at ${glarePosition.x}% ${glarePosition.y}%, rgba(255, 255, 255, 0.45) 0%, transparent 60%)`,
+          opacity: glareOpacity,
+          background:
+            'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.3) 0%, transparent 60%)',
         }}
       />
 
       {/* Content wrapper with slight 3D elevation */}
-      <div style={{ transform: 'translateZ(10px)' }} className="relative z-10 h-full">
+      <div style={{ transform: 'translateZ(6px)' }} className="relative z-10 h-full">
         {children}
       </div>
     </motion.div>

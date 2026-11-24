@@ -136,15 +136,24 @@ export const AppLayout = () => {
             {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
           </button>
 
-          {/* User badge */}
+          {/* User badge with Profile Navigation */}
           {user && (
-            <div className="flex items-center gap-2 pl-2 border-l border-zinc-200 dark:border-white/10">
-              <div className="w-8 h-8 rounded-full bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center font-display uppercase border border-emerald-500/20">
-                {user.name ? user.name[0] : 'U'}
-              </div>
-              <span className="hidden lg:inline text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                {user.name}
-              </span>
+            <div className="flex items-center gap-1.5 sm:gap-2 pl-2 border-l border-zinc-200 dark:border-white/10">
+              <Link
+                to="/profile"
+                className="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/5 transition-all text-left group"
+                title="View Profile & Settings"
+              >
+                <div className="w-8 h-8 rounded-full bg-emerald-600/15 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center font-display uppercase border border-emerald-500/20 group-hover:scale-105 group-hover:border-emerald-500/40 transition-transform">
+                  {user.name ? user.name[0] : 'U'}
+                </div>
+                <div className="hidden lg:flex flex-col">
+                  <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                    {user.name}
+                  </span>
+                  <span className="text-[9px] font-semibold text-zinc-400">Profile & Settings</span>
+                </div>
+              </Link>
 
               <button
                 type="button"

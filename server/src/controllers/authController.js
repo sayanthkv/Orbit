@@ -137,6 +137,60 @@ const getMe = async (req, res, next) => {
   }
 };
 
+const updateProfile = async (req, res, next) => {
+  try {
+    const { name, currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    if (name && typeof name === 'string' && name.trim()) {
+      user.name = name.trim();
+    }
+
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({
+          success: false,
+          message: 'Current password is required to set a new password.',
+        });
+      }
+      const isMatch = await user.comparePassword(currentPassword);
+      if (!isMatch) {
+        return res.status(400).json({
+          success: false,
+          message: 'Current password does not match.',
+        });
+      }
+      if (newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'New password must be at least 6 characters long.',
+        });
+      }
+      user.passwordHash = await User.hashPassword(newPassword);
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully!',
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          createdAt: user.createdAt,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const logout = (req, res) => {
   res.clearCookie('token', getCookieOptions());
   res.status(200).json({
@@ -149,5 +203,6 @@ module.exports = {
   register,
   login,
   getMe,
+  updateProfile,
   logout,
 };

@@ -14,6 +14,7 @@ import {
   Tags,
   Plus,
   MoreHorizontal,
+  User,
   X
 } from 'lucide-react';
 import CategoryModal from '../../components/CategoryModal';
@@ -260,6 +261,15 @@ export const ExpenseTrackerLayout = () => {
             <Tags className="w-4 h-4 text-emerald-600" />
             <span className="text-xs font-bold text-zinc-900 dark:text-white">Manage Categories</span>
           </button>
+
+          <Link
+            to="/profile"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="col-span-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center gap-2 hover:bg-emerald-500/15 transition-colors"
+          >
+            <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">Profile & Settings</span>
+          </Link>
         </div>
       </Modal>
 
